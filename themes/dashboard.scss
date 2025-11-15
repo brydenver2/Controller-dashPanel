@@ -1,5 +1,6 @@
 ﻿@import "default.scss";
 @import "controller.scss";
+@import "navigation.scss";
  
 header.picHeader {
 }
@@ -13,6 +14,7 @@ div.dashOuter {
   grid-row-gap: 0px;
   margin: auto;
   max-width: 1240px;
+  padding: 0.5rem;
 }
 
 div.dashContainer {
@@ -20,10 +22,13 @@ div.dashContainer {
   grid-template-columns: repeat(auto-fill,minmax(377px, 1fr));  */
   display: flex;
   flex-flow: row wrap;
+  justify-content: center;
+  width: 100%;
   /* flex-flow: column wrap; */
 }
 div.dashContainer > div > div.control-panel {
   width: 23.5rem;
+  margin: 0.25rem;
 }
 
 div.dashOuter[data-panel="dashboard"] > div.configContainer {

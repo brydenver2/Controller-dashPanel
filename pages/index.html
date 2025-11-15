@@ -74,22 +74,49 @@
 <body>
     <div class="dashOuter picDashboard" data-panel="dashboard">
         <header class="picHeader">
-            <div class="picController picControlPanel control-panel" style="display:block;"></div>
+            <nav class="picMainNav">
+                <button class="picNavTab active" data-tab="overview">
+                    <i class="fas fa-home"></i>
+                    <span class="picNavTabText">Overview</span>
+                </button>
+                <button class="picNavTab" data-tab="bodies">
+                    <i class="fas fa-swimming-pool"></i>
+                    <span class="picNavTabText">Bodies</span>
+                </button>
+                <button class="picNavTab" data-tab="circuits">
+                    <i class="fas fa-power-off"></i>
+                    <span class="picNavTabText">Circuits</span>
+                </button>
+                <button class="picNavTab" data-tab="pumps">
+                    <i class="fas fa-fan"></i>
+                    <span class="picNavTabText">Pumps</span>
+                </button>
+                <button class="picNavTab" data-tab="chemistry">
+                    <i class="fas fa-flask"></i>
+                    <span class="picNavTabText">Chemistry</span>
+                </button>
+                <button class="picNavTab" data-tab="schedules">
+                    <i class="fas fa-clock"></i>
+                    <span class="picNavTabText">Schedules</span>
+                </button>
+                <button class="picNavTab" data-tab="config">
+                    <i class="fas fa-cog"></i>
+                    <span class="picNavTabText">Config</span>
+                </button>
+            </nav>
         </header>
         <div class="dashContainer">
             <div class="container1">
-                <div class="picBodies picControlPanel control-panel"></div>
-                <div class="picChemistry picControlPanel control-panel"></div>
-                <div class="picPumps picControlPanel picPumpContainer control-panel"></div>
-                <div class="picSchedules picControlPanel picScheduleContainer control-panel"></div>
-                <div class="picCircuits picControlPanel control-panel"></div>
-                <div class="picLights picControlPanel control-panel"></div>
-                <div class="picFilters picControlPanel control-panel"></div>
-                <div class="picVirtualCircuits picControlPanel control-panel"></div>
+                <div class="picController picControlPanel control-panel" data-tab-group="overview"></div>
+                <div class="picBodies picControlPanel control-panel" data-tab-group="overview,bodies"></div>
+                <div class="picCircuits picControlPanel control-panel" data-tab-group="overview,circuits"></div>
+                <div class="picLights picControlPanel control-panel" data-tab-group="overview,circuits"></div>
+                <div class="picPumps picControlPanel picPumpContainer control-panel" data-tab-group="overview,pumps"></div>
+                <div class="picChemistry picControlPanel control-panel" data-tab-group="overview,chemistry"></div>
+                <div class="picSchedules picControlPanel picScheduleContainer control-panel" data-tab-group="overview,schedules"></div>
+                <div class="picFilters picControlPanel control-panel" data-tab-group="bodies"></div>
+                <div class="picVirtualCircuits picControlPanel control-panel" data-tab-group="circuits"></div>
             </div>
-            <div class="container2"></div>
-            <div class="container3"></div>
-
         </div>
         <div class="configContainer">
         </div>
@@ -102,6 +129,8 @@
                 $(document.body).css('background-image', `url(${background})`);
             else
                 $(document.body).css('background-image', '');
+            
+            // Initialize all widgets
             $('div.picDashboard').dashboard();
             $('div.picController').controller();
             $('div.picBodies').bodies();
@@ -111,6 +140,96 @@
             $('div.picChemistry').chemistry();
             $('div.picSchedules').schedules();
             $('div.picFilters').bodyFilters();
+            
+            // Tab switching functionality
+            var currentTab = 'overview';
+            
+            function showTabPanels(tabName) {
+                currentTab = tabName;
+                // Hide all panels in dashContainer first (but not the controller panel in header)
+                $('.dashContainer .control-panel').each(function() {
+                    var tabGroups = $(this).attr('data-tab-group');
+                    if (tabGroups) {
+                        var groups = tabGroups.split(',');
+                        if (groups.indexOf(tabName) !== -1) {
+                            $(this).show();
+                        } else {
+                            $(this).hide();
+                        }
+                    } else {
+                        // No tab group means hide it
+                        $(this).hide();
+                    }
+                });
+            }
+            
+            // Periodically enforce tab visibility (every 100ms for first 2 seconds, then every second)
+            var enforceCount = 0;
+            var enforceInterval = setInterval(function() {
+                showTabPanels(currentTab);
+                enforceCount++;
+                if (enforceCount > 20) {
+                    clearInterval(enforceInterval);
+                    // Continue enforcing but less frequently
+                    setInterval(function() {
+                        showTabPanels(currentTab);
+                    }, 1000);
+                }
+            }, 100);
+            
+            $('.picNavTab').on('click', function(e) {
+                e.preventDefault();
+                var tabName = $(this).data('tab');
+                
+                // Handle config tab specially
+                if (tabName === 'config') {
+                    var container = $('div.dashOuter');
+                    var configIcon = $('.picConfigIcon');
+                    if (container.attr('data-panel') === 'dashboard') {
+                        configIcon.find('i').attr('class', 'fas fa-home');
+                        container.attr('data-panel', 'configuration');
+                        // Build config page if it doesn't exist
+                        if ($('div.configContainer').children().length === 0) {
+                            var page = $('<div class="picConfigPage"></div>').appendTo($('div.configContainer'));
+                            page.configPage();
+                        }
+                    }
+                    $('.picNavTab').removeClass('active');
+                    $(this).addClass('active');
+                    return;
+                }
+                
+                // Handle dashboard tabs
+                var container = $('div.dashOuter');
+                if (container.attr('data-panel') === 'configuration') {
+                    $('.picConfigIcon').find('i').attr('class', 'fas fa-cogs');
+                    container.attr('data-panel', 'dashboard');
+                    $('div.configContainer').empty();
+                }
+                
+                // Switch tabs
+                $('.picNavTab').removeClass('active');
+                $(this).addClass('active');
+                
+                // Show/hide panels based on tab
+                showTabPanels(tabName);
+                
+                // Store active tab
+                localStorage.setItem('activeTab', tabName);
+            });
+            
+            // Initialize - show overview panels after widgets are initialized
+            setTimeout(function() {
+                showTabPanels('overview');
+            }, 100);
+            
+            // Restore last active tab
+            var activeTab = localStorage.getItem('activeTab');
+            if (activeTab && activeTab !== 'config') {
+                setTimeout(function() {
+                    $('.picNavTab[data-tab="' + activeTab + '"]').click();
+                }, 150);
+            }
         });
     </script>
 </body>
