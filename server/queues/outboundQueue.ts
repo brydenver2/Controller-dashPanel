@@ -1,15 +1,54 @@
-﻿import * as path from 'path';
+/**
+ * @fileoverview Outbound message queue management for the dashPanel application.
+ * 
+ * Provides functionality for:
+ * - Managing collections of outbound RS485 messages
+ * - Saving and loading message queues to/from disk
+ * - Supporting message test modules for debugging
+ * 
+ * Queues are stored in the data/outQueues/ directory as JSON files.
+ * 
+ * @module server/queues/outboundQueue
+ */
+
+import * as path from 'path';
 import * as fs from 'fs';
 import * as extend from 'extend';
 import { logger } from '../../server/logger/Logger';
+
+/**
+ * Collection class for managing outbound message queues.
+ * 
+ * Extends Array to provide additional functionality for
+ * loading, saving, and managing message queues.
+ * 
+ * @extends Array<outboundQueue>
+ */
 class outboundQueueCollection extends Array<outboundQueue> {
+    /** @private Path to queue storage directory */
     private _queuePath: string;
+
+    /** @private Flag indicating if collection is initialized */
     private _isInitialized: boolean = false;
+
+    /**
+     * Creates a new outbound queue collection.
+     * @param {...outboundQueue} items - Initial queue items
+     */
     constructor(...items) {
         super(...items);
         this._queuePath = path.posix.join(process.cwd(), '/data/outQueues/');
         this._isInitialized = true;
     }
+
+    /**
+     * Loads all queue descriptors from disk.
+     * 
+     * Scans the queue directory for:
+     * - Queue descriptor JSON file (outQueues.json)
+     * - Individual queue files (.out extension)
+     * - Test module scripts (.js files in testModules directory)
+     */
     public loadDescriptors() {
         this.length = 0; // Truncate the current list.
         let data = [];
@@ -69,12 +108,35 @@ class outboundQueueCollection extends Array<outboundQueue> {
         }
         catch (err) { logger.error(err); }
     }
+
+    /**
+     * Gets the path to the queue storage directory.
+     * @returns {string} The queue directory path
+     */
     public get queuePath(): string { return this._queuePath; }
+
+    /**
+     * Gets the next available queue ID.
+     * @returns {number} The next ID (max existing + 1)
+     */
     public getNextId(): number {
         let maxId = 0;
         this.forEach(q => { maxId = Math.max(q.id, maxId); })
         return maxId + 1;
     }
+
+    /**
+     * Saves a queue (creates new or updates existing).
+     * 
+     * @param {object} queue - Queue data to save
+     * @param {number} [queue.id] - Existing queue ID for updates
+     * @param {string} queue.name - Queue name
+     * @param {string} [queue.description] - Queue description
+     * @param {string} [queue.fileName] - Custom file name
+     * @param {object[]} [queue.messages] - Messages to save
+     * @returns {Promise<outboundQueue>} The saved queue
+     * @throws {Error} If queue name/filename already exists
+     */
     public async saveQueue(queue: any): Promise<outboundQueue> {
         // First things first.  See if we have a queue with the id.
         let oldq;
@@ -115,6 +177,11 @@ class outboundQueueCollection extends Array<outboundQueue> {
         }
         return Promise.resolve(oldq);
     }
+
+    /**
+     * Persists the queue collection descriptor to disk.
+     * @param {Function} cb - Callback function called with error if any
+     */
     public update(cb: (err?) => {}) {
         try {
             fs.writeFileSync(this.queuePath + 'outQueues.json', JSON.stringify(this));
@@ -124,27 +191,74 @@ class outboundQueueCollection extends Array<outboundQueue> {
             if (typeof cb !== 'undefined') cb(err);
         }
     }
+
+    /**
+     * Finds a queue by ID.
+     * @param {outboundQueue} q - Queue with ID to find
+     * @returns {outboundQueue|undefined} The matching queue
+     */
     public findQueue(q: outboundQueue) {
         return this.find(queue => {
             if (typeof q.id !== 'undefined' && queue.id === q.id) return true;
             return false;
         });
     }
+
+    /**
+     * Creates a safe filename from a queue name.
+     * Replaces special characters with underscores.
+     * @param {string} name - Queue name to convert
+     * @returns {string} Safe filename with .out extension
+     */
     public makeFileName(name: string) { return name.replace(/[&\/\\#,+$~%.'":*?<>{}]/g, '_') + '.out'; }
+
+    /**
+     * Initializes the queue collection by loading descriptors.
+     */
     public init() {
         this.loadDescriptors();
     }
 }
+
+/**
+ * Individual outbound message queue.
+ * 
+ * Represents a collection of RS485 messages that can be
+ * saved to and loaded from disk.
+ */
 class outboundQueue {
+    /** @private File name for this queue */
     private _fileName: string;
+
     constructor() { }
+
+    /** Unique queue identifier */
     public id: number;
+
+    /** Display name for the queue */
     public name: string;
+
+    /** Optional description */
     public description: string;
+
+    /** Queue type: 'messageList' or 'testModule' */
     public type: string = 'messageList';
+
+    /** Array of messages in this queue */
     public messages: any[];
+
+    /** Gets the file name for this queue */
     public get fileName(): string { return typeof this._fileName === 'undefined' ? this.name.replace(' ', '_') + '.out' : this.fileName; }
+
+    /** Sets the file name for this queue */
     public set fileName(val: string) { this._fileName = val; }
+
+    /**
+     * Saves messages to the queue file synchronously.
+     * @param {object[]} msgs - Messages to save
+     * @param {Function} cb - Callback function
+     * @returns {boolean} True if successful
+     */
     public saveMessagesSync(msgs, cb): boolean {
         let fd;
         let eol = require('os').EOL;
@@ -166,6 +280,12 @@ class outboundQueue {
         }
         return true;
     }
+
+    /**
+     * Loads messages from the queue file.
+     * @param {Function} [cb] - Optional callback function
+     * @returns {object[]} Array of loaded messages
+     */
     public loadMessages(cb?: (err?) => {}): any {
         let msgs = [];
         let eol = require('os').EOL;
@@ -185,4 +305,11 @@ class outboundQueue {
         return msgs;
     }
 }
+
+/**
+ * Singleton outbound queue collection instance.
+ * Use this throughout the application to manage message queues.
+ * 
+ * @type {outboundQueueCollection}
+ */
 export var outQueues: outboundQueueCollection = new outboundQueueCollection();

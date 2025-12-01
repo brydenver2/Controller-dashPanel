@@ -1,9 +1,19 @@
 ﻿# nodejs-poolController-dashPanel
+
 ## What is nodejs-poolController-dashPanel?
 dashPanel is a controller designed to operate using a [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) server backend.  You will need to set up your nodejs-poolController server and have it communicating with your pool equipment prior to setting up this server.  Once you have done that you can set up the dashPanel to communicate with that server.
 
 While this project was originally developed using an IntelliCenter control panel it should operate equally well with an IntelliTouch or EasyTouch control panel.
 ![image](https://user-images.githubusercontent.com/47839015/83304160-38a86780-a1b3-11ea-8214-442db6c6bdc4.png)
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Installation Guide](docs/INSTALLATION.md) | Complete setup instructions |
+| [User Guide](docs/USER_GUIDE.md) | How to use the dashboard |
+| [API Reference](docs/API.md) | REST API and WebSocket documentation |
+| [Documentation Index](docs/README.md) | Full documentation wiki |
 
 ## Configuring the dashPanel
 To configure the dashPanel you need to place the url for your [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) server in the configuration.  Click the bars menu on the top left of the screen and fill in the ip address and port.  Then press the Apply button.  If this button is grayed out you will need to edit the config.json file manually and enter the settings under the services menu.

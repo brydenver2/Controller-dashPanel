@@ -1,25 +1,75 @@
-﻿import * as path from 'path';
+/**
+ * @fileoverview RS485 message parsing and documentation for pool equipment communication.
+ * 
+ * This module provides:
+ * - Protocol enumerations for different pool equipment types
+ * - Message parsing for various RS485 protocols (IntelliCenter, Chlorinator, Hayward, etc.)
+ * - Timestamp utilities for message logging
+ * - Message documentation loading and lookup
+ * 
+ * Supported protocols:
+ * - Broadcast: General pool controller broadcasts
+ * - Pump: Pump communication (addresses 96-111)
+ * - Chlorinator: Salt chlorinator communication
+ * - IntelliChem: Chemistry controller communication (addresses 144-158)
+ * - IntelliValve: Valve controller communication
+ * - Heater: Heater communication (addresses 112-127)
+ * - AquaLink: Jandy AquaLink protocol
+ * - Hayward: Hayward equipment protocol
+ * 
+ * @module server/messages/messages
+ */
+
+import * as path from 'path';
 import * as fs from 'fs';
 import * as extend from 'extend';
 import { logger } from '../logger/Logger';
 
 import { protocol } from 'socket.io-client';
+
+/**
+ * Direction of message flow.
+ */
 export enum Direction {
+    /** Inbound message (received from RS485 bus) */
     In = 'in',
+    /** Outbound message (sent to RS485 bus) */
     Out = 'out'
 }
+
+/**
+ * RS485 communication protocol types.
+ * Each protocol has specific header formats and address ranges.
+ */
 export enum Protocol {
+    /** Unknown or not yet identified protocol */
     Unknown = 'unknown',
+    /** Standard pool controller broadcast messages */
     Broadcast = 'broadcast',
+    /** Pump communication protocol (addresses 96-111) */
     Pump = 'pump',
+    /** Salt chlorinator protocol */
     Chlorinator = 'chlorinator',
+    /** IntelliChem chemistry controller (addresses 144-158) */
     IntelliChem = 'intellichem',
+    /** IntelliValve valve controller */
     IntelliValve = 'intellivalve',
+    /** Heater communication protocol (addresses 112-127) */
     Heater = 'heater',
+    /** Jandy AquaLink protocol */
     AquaLink = 'aqualink',
+    /** Hayward equipment protocol */
     Hayward = 'hayward',
+    /** Protocol detected but not recognized */
     Unidentified = 'unidentified'
 }
+
+/**
+ * Timestamp utility class for message timing and formatting.
+ * 
+ * Provides date/time manipulation methods specific to message logging
+ * with timezone support and ISO formatting.
+ */
 export class Timestamp {
     private _dt: Date;
     constructor(dt?: Date | string) {

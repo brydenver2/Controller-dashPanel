@@ -1,4 +1,17 @@
-﻿import * as express from "express";
+/**
+ * @fileoverview Configuration API routes for the dashPanel application.
+ * 
+ * Provides REST endpoints for:
+ * - Getting and setting the backend service URI
+ * - Discovering pool controllers and REM controllers on the network
+ * - Retrieving and updating configuration sections
+ * - Getting application version information
+ * - Fetching dashboard options including available backgrounds
+ * 
+ * @module server/api/Config
+ */
+
+import * as express from "express";
 import * as extend from 'extend';
 import * as dns from 'dns';
 import { ApiError } from '../Errors';
@@ -8,7 +21,29 @@ import { config } from "../config/Config";
 import { logger } from "../logger/Logger";
 import { versionCheck } from '../config/VersionCheck';
 import { njsPCRelay } from "../relay/relayRoute";
+
+/**
+ * Configuration route handler class.
+ * 
+ * Registers all configuration-related API endpoints on the Express application.
+ * All routes are registered as static methods for use with Express router.
+ */
 export class ConfigRoute {
+    /**
+     * Initializes all configuration API routes on the Express application.
+     * 
+     * Registered routes:
+     * - GET /config/serviceUri - Get backend service connection settings
+     * - PUT /config/serviceUri - Update backend service connection settings
+     * - GET /config/findPoolControllers - Discover pool controllers via SSDP
+     * - GET /config/findREMControllers - Discover REM controllers via SSDP
+     * - GET /config/appVersion - Get application version information
+     * - GET /config/:section - Get a configuration section
+     * - PUT /config/:section - Update a configuration section
+     * - GET /options - Get dashboard options including backgrounds
+     * 
+     * @param {express.Application} app - The Express application instance
+     */
     public static initRoutes(app: express.Application) {
         app.get('/config/serviceUri', (req, res, next) => {
             try {

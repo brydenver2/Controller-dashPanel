@@ -1,4 +1,20 @@
-﻿import * as os from 'os';
+/**
+ * @fileoverview Web server implementation for the dashPanel application.
+ * 
+ * Provides multi-protocol server support including:
+ * - HTTP server with Express.js
+ * - HTTPS server with SSL/TLS support
+ * - HTTP/2 server (placeholder for future implementation)
+ * - Socket.IO for real-time WebSocket communication
+ * - SSDP and mDNS discovery (placeholders)
+ * 
+ * The server acts as both a web server for the dashboard UI and a relay
+ * for communication with the nodejs-poolController backend.
+ * 
+ * @module server/Server
+ */
+
+import * as os from 'os';
 import * as path from "path";
 import * as express from "express";
 import * as fs from "fs";
@@ -20,10 +36,33 @@ import { RelayRoute, njsPCRelay } from "./relay/relayRoute";
 import { Namespace, RemoteSocket, Server as SocketIoServer, Socket } from "socket.io";
 import { DefaultEventsMap } from "socket.io/dist/typed-events";
 
-// This class serves data and pages for
+/**
+ * Main web server orchestrator class.
+ * 
+ * Manages multiple protocol servers (HTTP, HTTPS, HTTP/2) and provides
+ * a unified interface for emitting events to connected clients.
+ * 
+ * @example
+ * import { webApp } from './Server';
+ * 
+ * // Initialize all configured servers
+ * webApp.init();
+ * 
+ * // Emit event to all connected clients
+ * webApp.emitToClients('poolState', { temp: 78 });
+ */
 export class WebServer {
+    /** @private Array of active protocol servers */
     private _servers: ProtoServer[] = []; 
+
     constructor() { }
+
+    /**
+     * Initializes all configured web servers.
+     * 
+     * Reads the 'web.servers' configuration section and initializes
+     * appropriate server instances for each enabled protocol.
+     */
     public init() {
         let cfg = config.getSection('web');
         let srv;
@@ -43,26 +82,75 @@ export class WebServer {
             }
         }
     }
+
+    /**
+     * Emits an event to all connected Socket.IO clients across all servers.
+     * 
+     * @param {string} evt - The event name to emit
+     * @param {...any} data - Data to send with the event
+     */
     public emitToClients(evt: string, ...data: any) {
         for (let i = 0; i < this._servers.length; i++) {
             this._servers[i].emitToClients(evt, ...data);
         }
     }
+
+    /**
+     * Emits an event to clients in a specific Socket.IO channel/room.
+     * 
+     * @param {string} channel - The channel/room name to emit to
+     * @param {string} evt - The event name to emit
+     * @param {...any} data - Data to send with the event
+     */
     public emitToChannel(channel: string, evt: string, ...data: any) {
         for (let i = 0; i < this._servers.length; i++) {
             this._servers[i].emitToChannel(channel, evt, ...data);
         }
     }
 }
+
+/**
+ * Base class for all protocol server implementations.
+ * 
+ * Provides common interface for server state and event emission.
+ * @abstract
+ */
 class ProtoServer {
-    // base class for all servers.
+    /** Flag indicating if the server is currently running */
     public isRunning: boolean = false;
+
+    /**
+     * Emits an event to all connected clients.
+     * @param {string} evt - Event name
+     * @param {...any} data - Event data
+     */
     public emitToClients(evt: string, ...data: any) {}
+
+    /**
+     * Emits an event to a specific channel.
+     * @param {string} channel - Channel name
+     * @param {string} evt - Event name
+     * @param {...any} data - Event data
+     */
     public emitToChannel(channel: string, evt: string, ...data: any) { }
 }
+
+/**
+ * HTTP/2 server implementation (placeholder).
+ * 
+ * @extends ProtoServer
+ */
 export class Http2Server extends ProtoServer {
+    /** The HTTP/2 server instance */
     public server: http2.Http2Server;
+
+    /** Express application instance */
     public app: express.Application;
+
+    /**
+     * Initializes the HTTP/2 server.
+     * @param {object} cfg - Server configuration
+     */
     public init(cfg) {
         if (cfg.enabled) {
             this.app = express();
@@ -70,13 +158,37 @@ export class Http2Server extends ProtoServer {
         }
     }
 }
+
+/**
+ * HTTP server implementation with Socket.IO support.
+ * 
+ * Provides the main web server functionality including:
+ * - Static file serving for the dashboard UI
+ * - API route registration
+ * - Socket.IO real-time communication
+ * - CORS support for cross-origin requests
+ * 
+ * @extends ProtoServer
+ */
 export class HttpServer extends ProtoServer {
-    // Http protocol
+    /** Express application instance */
     public app: express.Application;
+
+    /** Node.js HTTP server instance */
     public server: http.Server;
+
+    /** @private IP address family preference */
     private family = 'IPv4';
+
+    /** @private HTTP port number */
     private _httpPort: number;
 
+    /**
+     * Gets the network interface information for the server.
+     * Finds the first non-internal IPv4 interface with a valid MAC address.
+     * @private
+     * @returns {os.NetworkInterfaceInfo|undefined} Network interface info or undefined
+     */
     private getInterface() {
         const networkInterfaces = os.networkInterfaces();
         // RKS: We need to get the scope-local nic. This has nothing to do with IP4/6 and is not necessarily named en0 or specific to a particular nic.  We are
@@ -98,10 +210,42 @@ export class HttpServer extends ProtoServer {
         }
         return fallback;
     }
+
+    /**
+     * Gets the server's IP address.
+     * @returns {string} The IP address or '0.0.0.0' if not determined
+     */
     public ip() { return typeof this.getInterface() === 'undefined' ? '0.0.0.0' : this.getInterface().address; }
+
+    /**
+     * Gets the server's MAC address.
+     * @returns {string} The MAC address or '00:00:00:00' if not determined
+     */
     public mac() { return typeof this.getInterface() === 'undefined' ? '00:00:00:00' : this.getInterface().mac; }
+
+    /**
+     * Gets the HTTP port number.
+     * @returns {number} The configured HTTP port
+     */
     public httpPort(): number { return this._httpPort }
 
+    /**
+     * Initializes the HTTP server with the provided configuration.
+     * 
+     * Sets up:
+     * - Express application with middleware
+     * - CORS headers for cross-origin requests
+     * - Static file serving for UI assets
+     * - API route handlers
+     * - Socket.IO server for real-time communication
+     * - Error handling middleware
+     * 
+     * @param {object} cfg - Server configuration object
+     * @param {boolean} cfg.enabled - Whether to enable the server
+     * @param {string} cfg.ip - IP address to bind to
+     * @param {number} cfg.port - Port number to listen on
+     * @param {boolean} [cfg.httpsRedirect] - Whether to redirect to HTTPS
+     */
     public init(cfg) {
         if (cfg.enabled) {
             this.app = express();
@@ -174,19 +318,47 @@ export class HttpServer extends ProtoServer {
             njsPCRelay.init();
         }
     }
+
+    /** Socket.IO server instance */
     public sockServer: SocketIoServer<DefaultEventsMap, DefaultEventsMap>;
+
+    /** @private Array of connected sockets */
     private _sockets: RemoteSocket<DefaultEventsMap, any>[] = [];
+
+    /**
+     * Emits an event to all connected Socket.IO clients.
+     * @param {string} evt - Event name
+     * @param {...any} data - Event data
+     */
     public emitToClients(evt: string, ...data: any) {
         if (this.isRunning) {
             this.sockServer.emit(evt, ...data);
         }
     }
+
+    /**
+     * Emits an event to clients in a specific Socket.IO channel/room.
+     * @param {string} channel - Channel name
+     * @param {string} evt - Event name
+     * @param {...any} data - Event data
+     */
     public emitToChannel(channel: string, evt: string, ...data: any) {
         //console.log(`Emitting to channel ${channel} - ${evt}`)
         if (this.isRunning) {
             this.sockServer.to(channel).emit(evt, ...data);
         }
     }
+
+    /**
+     * Initializes Socket.IO server with event handlers.
+     * 
+     * Sets up handlers for:
+     * - sendRS485PortStats: Toggle RS485 port statistics streaming
+     * - sendLogMessages: Toggle log message streaming
+     * - sendOutboundMessage: Send outbound RS485 message
+     * 
+     * @protected
+     */
     protected initSockets() {
         let options = {
             allowEIO3: true,
@@ -226,6 +398,13 @@ export class HttpServer extends ProtoServer {
         });
         this.app.use('/socket.io-client', express.static(path.join(process.cwd(), '/node_modules/socket.io-client/dist/'), { maxAge: '60d' }));
     }
+
+    /**
+     * Handles individual socket connections.
+     * Sets up error handling and lifecycle events for each socket.
+     * @private
+     * @param {Socket} sock - The Socket.IO socket instance
+     */
     private socketHandler(sock: Socket) {
         let self = this;
         setTimeout(async () => {
@@ -242,9 +421,31 @@ export class HttpServer extends ProtoServer {
         sock.on('echo', (msg) => { sock.emit('echo', msg); });
     }
 }
+
+/**
+ * HTTPS server implementation with SSL/TLS support.
+ * 
+ * Extends HttpServer with:
+ * - SSL certificate loading
+ * - HTTPS-specific configuration
+ * - Secure socket initialization
+ * 
+ * @extends HttpServer
+ */
 export class HttpsServer extends HttpServer {
+    /** HTTPS server instance */
     declare server: https.Server;
 
+    /**
+     * Initializes the HTTPS server with SSL configuration.
+     * 
+     * @param {object} cfg - Server configuration
+     * @param {boolean} cfg.enabled - Whether to enable HTTPS
+     * @param {string} cfg.ip - IP address to bind to
+     * @param {number} cfg.port - Port number (default 5151)
+     * @param {string} cfg.sslKeyFile - Path to SSL private key file
+     * @param {string} cfg.sslCertFile - Path to SSL certificate file
+     */
     public async init(cfg) {
         // const auth = require('http-auth');
 	// this.uuid = cfg.uuid;
@@ -344,12 +545,32 @@ export class HttpsServer extends HttpServer {
     }
 }
 
+/**
+ * SSDP (Simple Service Discovery Protocol) server placeholder.
+ * 
+ * Will enable automatic discovery of the dashboard panel on local networks.
+ * @extends ProtoServer
+ */
 export class SspdServer extends ProtoServer {
-    // Simple service discovery protocol
+    /** SSDP server instance */
     public server: any;
 }
+
+/**
+ * mDNS (Multicast DNS) server placeholder.
+ * 
+ * Will enable Bonjour/Avahi discovery of the dashboard panel.
+ * @extends ProtoServer
+ */
 export class MdnsServer extends ProtoServer {
-    // Multi-cast DNS server
+    /** mDNS server instance */
     public server: any;
 }
+
+/**
+ * Singleton web application instance.
+ * Use this throughout the application to access the web server.
+ * 
+ * @type {WebServer}
+ */
 export const webApp = new WebServer();

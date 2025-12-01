@@ -1,4 +1,19 @@
-﻿import * as express from 'express';
+/**
+ * @fileoverview File upload handling for the dashPanel application.
+ * 
+ * Provides functionality for:
+ * - Log file uploads and parsing (RS485 message logs, hex streams)
+ * - Background image uploads for dashboard customization
+ * - File type detection and automatic format handling
+ * 
+ * Supported log file formats:
+ * - JSON message logs from nodejs-poolController
+ * - Hex stream files (AquaLink D format)
+ * 
+ * @module server/upload/upload
+ */
+
+import * as express from 'express';
 import * as extend from 'extend';
 import * as multer from 'multer';
 import * as path from 'path';
@@ -7,12 +22,34 @@ import * as fs from 'fs';
 import { config } from '../../server/config/Config';
 import { logger } from '../../server/logger/Logger';
 import { Message, Inbound } from '../../server/messages/messages';
+
+/**
+ * Enumeration of supported log file types.
+ */
 export enum LogFileTypes {
+    /** Hex stream format (pipe-delimited hex bytes) */
     HexStream = 'hexstream',
+    /** JSON message format (one message per line) */
     Messages = 'messages',
+    /** Unknown or unsupported format */
     Unknown = 'unknown'
 }
+
+/**
+ * Upload route handler class.
+ * 
+ * Registers file upload endpoints on the Express application.
+ */
 export class UploadRoute {
+    /**
+     * Initializes upload routes on the Express application.
+     * 
+     * Registered routes:
+     * - POST /upload/logfile - Upload and parse RS485 log files
+     * - POST /upload/backgroundFile - Upload dashboard background images
+     * 
+     * @param {express.Application} app - The Express application instance
+     */
     public static initRoutes(app: express.Application) {
         app.post('/upload/logfile', (req, res, next) => {
             var upload = logUpload.upload.single('logFile');
@@ -54,7 +91,20 @@ export class UploadRoute {
         });
     }
 }
+
+/**
+ * Log file upload handler class.
+ * 
+ * Manages uploading and parsing of RS485 communication log files.
+ * Supports both JSON message format and hex stream formats.
+ */
 export class LogUpload {
+    /**
+     * Creates a new LogUpload instance.
+     * 
+     * Configures multer middleware for log file uploads with
+     * disk storage to the configured upload path.
+     */
     constructor() {
         let cfg = config.getSection('uploads.logFile', { uploads: { logFile: { path: 'uploads/' } } });
         try {
@@ -92,20 +142,46 @@ export class LogUpload {
             });
         } catch (err) { logger.error(err); }
     }
+
+    /** @private Multer middleware instance */
     private _multer = multer({});
+
+    /** Whether to preserve existing files with ordinal suffixes */
     public preserveFile: boolean = false;
+
+    /** Gets the configured multer middleware */
     public get upload() { return this._multer; }
+
+    /**
+     * File filter for log file uploads.
+     * Only allows .log files.
+     * @static
+     */
     public static logFilter(req, file, cb) {
         if (!file.originalname.match(/\.(log|)$/)) {
             return cb(new Error('Only .log files are allowed!'), false);
         }
         cb(null, true);
     }
+
+    /**
+     * Parses a packet message into a Message object.
+     * @static
+     * @param {object} msg - The message to parse
+     * @returns {Message} The parsed message
+     */
     public static parsePacket(msg) {
         let m: Message = new Message();
         //m.parseV5(msg);
         return m;
     }
+
+    /**
+     * Converts a v5 format message to the internal format.
+     * @static
+     * @param {object} msg - The v5 format message
+     * @returns {object|Message} The converted message
+     */
     public static fromVer5(msg) {
         if (msg.type === 'packet') {
             return LogUpload.parsePacket(msg);
@@ -123,6 +199,17 @@ export class LogUpload {
             };
         }
     }
+
+    /**
+     * Reads and parses an AquaLink D format hex stream file.
+     * 
+     * The file contains pipe-delimited hexadecimal bytes that are
+     * parsed into RS485 messages.
+     * 
+     * @static
+     * @param {string} filepath - Path to the hex stream file
+     * @returns {object[]} Array of parsed message objects
+     */
     public static readAquaLinkDFile(filepath) {
         let fd;
         let messages = [];
@@ -177,6 +264,15 @@ export class LogUpload {
         finally { if (typeof fd !== 'undefined') fs.closeSync(fd); }
         return messages;
     }
+
+    /**
+     * Alternative implementation for reading AquaLink D format files.
+     * Loads entire file into memory before parsing.
+     * @static
+     * @param {string} filepath - Path to the hex stream file
+     * @returns {object[]} Array of parsed message objects
+     * @deprecated Use readAquaLinkDFile for large files
+     */
     public static readAquaLinkDFile1(filepath) {
         let bytes = fs.readFileSync(filepath, "utf8").split(/\|/).filter(Boolean);
         // convert all the bytes to numbers.
@@ -219,6 +315,13 @@ export class LogUpload {
         }
         return messages;
     }
+
+    /**
+     * Determines the type of a log file by examining its first bytes.
+     * @static
+     * @param {string} filePath - Path to the file to check
+     * @returns {LogFileTypes} The detected file type
+     */
     public static getLogFileType(filePath) {
         let lft = LogFileTypes.Unknown;
         let fd;
@@ -238,6 +341,14 @@ export class LogUpload {
         finally { if (typeof fd !== 'undefined') fs.closeSync(fd); }
         return lft;
     }
+
+    /**
+     * Reads and parses a JSON-format log file.
+     * Each line should contain a JSON message object.
+     * @static
+     * @param {string} filePath - Path to the log file
+     * @returns {object[]} Array of parsed message objects
+     */
     public static readLogFile(filePath) {
         let lines = fs.readFileSync(filePath, 'utf8').split(/[\n\r]/).filter(Boolean);
          let arr = [];
@@ -269,8 +380,21 @@ export class LogUpload {
         return arr;
     }
 }
+
+/**
+ * Background image upload handler class.
+ * 
+ * Manages uploading and listing of dashboard background images.
+ * Images are stored in the themes/Images directory.
+ */
 export class BackgroundUpload {
+    /** Upload destination path */
     public path = path.posix.join(process.cwd(), 'themes/Images');
+
+    /**
+     * Creates a new BackgroundUpload instance.
+     * Configures multer middleware for image uploads.
+     */
     constructor() {
         try {
             this._multer = multer({
@@ -301,9 +425,21 @@ export class BackgroundUpload {
             });
         } catch (err) { logger.error(err); }
     }
+
+    /** @private Multer middleware instance */
     private _multer = multer({});
+
+    /** Whether to preserve existing files with ordinal suffixes */
     public preserveFile: boolean = false;
+
+    /** Gets the configured multer middleware */
     public get upload() { return this._multer; }
+
+    /**
+     * Gets a list of all available background images.
+     * @static
+     * @returns {Array<{name: string, ext: string, size: number, url: string}>} Array of background image metadata
+     */
     public static getBackgrounds(): { name: string, ext: string, size: number, url: string }[] {
         let arr = [];
         let dir = path.posix.join(process.cwd(), 'themes/Images');
@@ -321,5 +457,9 @@ export class BackgroundUpload {
         return arr;
     }
 }
+
+/** Singleton log upload handler instance */
 const logUpload = new LogUpload();
+
+/** Singleton background upload handler instance */
 const backgroundUpload = new BackgroundUpload();

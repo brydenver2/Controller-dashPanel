@@ -1,4 +1,20 @@
-﻿import * as express from "express";
+/**
+ * @fileoverview Relay route and service for proxying requests to nodejs-poolController backend.
+ * 
+ * This module provides:
+ * - HTTP request relay/proxy to the backend pool controller
+ * - Socket.IO connection relay for real-time events
+ * - Bidirectional event forwarding between dashboard clients and backend
+ * 
+ * The relay pattern allows the dashboard to:
+ * - Act as a proxy to the backend for all /njsPC/* requests
+ * - Forward Socket.IO events from backend to connected dashboard clients
+ * - Send commands from dashboard clients to the backend
+ * 
+ * @module server/relay/relayRoute
+ */
+
+import * as express from "express";
 import * as http from "http";
 import * as url from "url";
 import * as extend from 'extend';
@@ -11,7 +27,25 @@ import { io as sockClient, Socket } from "socket.io-client";
 import { DefaultEventsMap } from "@socket.io/component-emitter";
 import { webApp } from "../Server";
 
+/**
+ * Express route handler for relay endpoints.
+ * 
+ * Registers the /njsPC/* catch-all route that proxies all requests
+ * to the backend nodejs-poolController server.
+ */
 export class RelayRoute {
+    /**
+     * Initializes relay routes on the Express application.
+     * 
+     * Registers a catch-all route that forwards all /njsPC/* requests
+     * to the backend pool controller server.
+     * 
+     * @param {express.Application} app - The Express application instance
+     * 
+     * @example
+     * // Request to /njsPC/state/temps
+     * // Proxied to: http://backend:4200/state/temps
+     */
     public static initRoutes(app: express.Application) {
         app.all('/njsPC/*', async (req, res, next) => {
             try {
@@ -61,12 +95,42 @@ export class RelayRoute {
     }
 
 }
+
+/**
+ * Service relay class for managing backend communication.
+ * 
+ * Handles:
+ * - HTTP request proxying to the backend pool controller
+ * - Socket.IO connection management and event forwarding
+ * - Automatic reconnection handling
+ * 
+ * Events from the backend are categorized:
+ * - rs485Stats: Sent to 'rs485PortStats' channel for port statistics
+ * - logMessage: Sent to 'msgLogger' channel for message logging
+ * - All others: Broadcast to all connected dashboard clients
+ */
 class ServiceRelay {
+    /** URL prefix for proxied requests */
     public prefix = '/njsPC';
+
+    /** Whether to use proxy mode (forward events from backend) */
     public useProxy = false;
+
+    /** Backend HTTP service configuration */
     public service: { protocol?: string, hostname?: string, port?: number, options?: any } = {};
+
+    /** Backend Socket.IO configuration */
     public socket: { protocol?: string, hostname?: string, port?: number, options?: any } = {};
+
+    /** @protected Socket.IO client connection to backend */
     protected _sockClient: Socket<DefaultEventsMap, DefaultEventsMap>;
+
+    /**
+     * Initializes the service relay with current configuration.
+     * 
+     * Reads configuration from 'web.services' section and establishes
+     * Socket.IO connection to the backend if proxy mode is enabled.
+     */
     public init() {
         let cfg = config.getSection('web.services');
         this.service.protocol = cfg.protocol;
@@ -79,8 +143,29 @@ class ServiceRelay {
         this.socket.options = extend(true, { reconnectionDelay: 2000, reconnection: true, reconnectionDelayMax: 20000, transports: ['websocket'], upgrade: true, }, this.socket.options);
         this.initSockets();
     }
+
+    /**
+     * Gets the full Socket.IO URL for the backend connection.
+     * @returns {string} The socket URL (e.g., "ws://127.0.0.1:4200")
+     */
     public get socketUrl() { return `${this.socket.protocol}${this.socket.hostname}${typeof this.socket.port !== 'undefined' ? ':' + this.socket.port : ''}` }
+
+    /**
+     * Gets the full HTTP service URL for the backend.
+     * @returns {string} The service URL (e.g., "http://127.0.0.1:4200")
+     */
     public get serviceUrl() { return `${this.service.protocol}${this.service.hostname}${typeof this.service.port !== 'undefined' ? ':' + this.service.port : ''}` };
+
+    /**
+     * Initializes Socket.IO client connection to the backend.
+     * 
+     * Sets up event handlers for:
+     * - Connection lifecycle (connect, disconnect, reconnect)
+     * - Error handling (connect_error, connect_timeout)
+     * - Event forwarding (all events from backend to dashboard clients)
+     * 
+     * @private
+     */
     private initSockets() {
         if (typeof this._sockClient !== 'undefined') {
             if (!this._sockClient.disconnected) this._sockClient.disconnect();
@@ -119,9 +204,29 @@ class ServiceRelay {
             logger.info(`Opening socket ${this.socketUrl}`);
         }
     }
+
+    /**
+     * Relays a Socket.IO event to the backend server.
+     * 
+     * @param {string} evt - Event name to emit
+     * @param {...any} data - Event data to send
+     */
     public relaySocket(evt, ...data) {
         this._sockClient.emit(evt, data);
     }
+
+    /**
+     * Proxies an HTTP request to the backend pool controller.
+     * 
+     * Strips the /njsPC prefix from the URL and forwards the request
+     * to the configured backend service. Response is piped back to
+     * the original client.
+     * 
+     * @param {express.Request} req - The incoming Express request
+     * @param {express.Response} res - The Express response object
+     * @param {express.NextFunction} next - Express next middleware function
+     * @returns {Promise<void>}
+     */
     public async relayRequest(req: express.Request, res, next: express.NextFunction) {
         try {
             let proxyUrl = `${this.serviceUrl}${req.url.replace('/njsPC', '')}`;
@@ -179,4 +284,11 @@ class ServiceRelay {
         catch (err) { next(err); }
     }
 }
+
+/**
+ * Singleton service relay instance.
+ * Use this throughout the application to relay requests/events to the backend.
+ * 
+ * @type {ServiceRelay}
+ */
 export let njsPCRelay = new ServiceRelay();

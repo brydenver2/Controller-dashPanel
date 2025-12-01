@@ -1,4 +1,19 @@
-﻿import * as express from "express";
+/**
+ * @fileoverview Messages API routes for the dashPanel application.
+ * 
+ * Provides REST endpoints for RS485 message management including:
+ * - Creating and saving outbound message queues
+ * - Retrieving saved message queues
+ * - Accessing message documentation and constants
+ * - Looking up message definitions by key bytes
+ * 
+ * This module is primarily used by the Message Manager tool for
+ * debugging RS485 communication with pool equipment.
+ * 
+ * @module server/api/Messages
+ */
+
+import * as express from "express";
 import { ApiError } from '../Errors';
 import { UploadRoute, BackgroundUpload } from "../upload/upload";
 import { Client } from "node-ssdp";
@@ -8,7 +23,26 @@ import { MessageDocs } from "../messages/messages";
 import { outQueues } from "../queues/outboundQueue";
 import * as extend from 'extend';
 
+/**
+ * Messages route handler class.
+ * 
+ * Registers all message-related API endpoints on the Express application.
+ * Used for RS485 message inspection and queue management.
+ */
 export class MessagesRoute {
+    /**
+     * Initializes all message API routes on the Express application.
+     * 
+     * Registered routes:
+     * - PUT /messages/queue - Save/update a message queue
+     * - GET /messages/queue/:id - Get a specific message queue by ID
+     * - GET /messages/queues - List all available message queues
+     * - GET /messages/docs/constants - Get RS485 protocol constants
+     * - GET /messages/docs/keyBytes - Get message key byte definitions
+     * - GET /messages/docs/:key - Get documentation for a specific message key
+     * 
+     * @param {express.Application} app - The Express application instance
+     */
     public static initRoutes(app: express.Application) {
         app.put('/messages/queue', async (req, res, next) => {
             try {

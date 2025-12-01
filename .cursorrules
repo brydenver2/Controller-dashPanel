@@ -1,0 +1,51 @@
+# Cursor Rules for nodejs-poolController-dashPanel
+
+## Project Context
+This is a TypeScript/Node.js web dashboard for pool controller management that acts as a relay to a nodejs-poolController backend server.
+
+## Code Style
+
+### TypeScript
+- Use TypeScript for all server-side code
+- Prefer `const` over `let` where possible
+- Use explicit type annotations for function parameters and return types
+- Follow existing singleton patterns for services (config, logger, webApp)
+
+### Classes
+- Use classes for services and route handlers
+- Export singleton instances, not constructors
+- Use JSDoc/TSDoc comments for public methods
+
+### Naming Conventions
+- camelCase for variables and functions
+- PascalCase for classes and interfaces
+- Prefix private members with underscore (_)
+- Use descriptive names for async functions
+
+### Express Routes
+- Use static methods on route handler classes
+- Initialize routes via `initRoutes(app: express.Application)`
+- Use try/catch with next(err) for error handling
+
+## Architecture Patterns
+
+### Module Organization
+- `server/` - Backend TypeScript modules
+- `scripts/` - Frontend JavaScript widgets
+- `pages/` - HTML pages
+- `themes/` - CSS and images
+
+### Configuration
+- Read from `config.getSection()`, never access config directly
+- Use environment variables for Docker deployments
+- Default values in `defaultConfig.json`
+
+### Socket.IO
+- Use channels for targeted event delivery
+- Relay events from backend via `webApp.emitToClients()` or `webApp.emitToChannel()`
+
+## Do Not
+- Commit node_modules or dist directories
+- Hardcode IP addresses or ports
+- Create new dependencies without checking existing alternatives
+- Modify frontend jQuery widget patterns significantly

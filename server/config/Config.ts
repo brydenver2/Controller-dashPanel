@@ -1,11 +1,63 @@
-﻿import * as path from 'path';
+/**
+ * @fileoverview Configuration management for the dashPanel application.
+ * 
+ * Handles loading, merging, and persisting application configuration.
+ * Configuration sources (in order of priority):
+ * 1. Environment variables (POOL_WEB_* prefix)
+ * 2. User config.json file
+ * 3. Default configuration (defaultConfig.json)
+ * 
+ * The configuration is automatically persisted to config.json when modified.
+ * 
+ * @module server/config/Config
+ */
+
+import * as path from 'path';
 import * as fs from 'fs';
 import * as extend from 'extend';
 import { logger } from '../logger/Logger';
+
+/**
+ * Configuration management class.
+ * 
+ * Provides hierarchical configuration management with:
+ * - Automatic merging of defaults with user configuration
+ * - Support for dotted path notation (e.g., 'web.services.port')
+ * - Environment variable overrides for Docker deployments
+ * - Atomic file writes to prevent corruption
+ * - Recovery from corrupted configuration files
+ * 
+ * @example
+ * import { config } from './config/Config';
+ * 
+ * // Get a configuration section
+ * const webConfig = config.getSection('web.services');
+ * 
+ * // Update a configuration section
+ * config.setSection('web.services.port', 4200);
+ */
 class Config {
+    /** @private Path to the configuration file */
     private cfgPath: string;
+
+    /** @private The loaded configuration object */
     private _cfg: any;
+
+    /** @private Flag indicating if configuration was successfully initialized */
     private _isInitialized: boolean = false;
+
+    /**
+     * Creates a new Config instance and loads configuration.
+     * 
+     * Initialization process:
+     * 1. Load defaultConfig.json as base configuration
+     * 2. Merge with existing config.json if present
+     * 3. Handle migration from legacy config location
+     * 4. Apply environment variable overrides
+     * 5. Write merged configuration back to config.json
+     * 
+     * @throws {Error} If configuration cannot be read or parsed
+     */
     constructor() {
         // Fixed configuration path relative to working directory.
         this.cfgPath = path.join(process.cwd(), 'config.json');
@@ -71,6 +123,13 @@ class Config {
             throw err;
         }
     }
+
+    /**
+     * Persists the current configuration to the config.json file.
+     * 
+     * Only writes if initialization was successful. Handles write permission
+     * errors gracefully by disabling future write attempts.
+     */
     public update() {
         // Don't overwrite the configuration if we failed during the initialization.
         try {
@@ -89,6 +148,20 @@ class Config {
         }
         catch (err) { console.log(`Error writing configuration file ${err}`); }
     }
+
+    /**
+     * Sets a configuration section value.
+     * 
+     * Supports dotted path notation to set nested configuration values.
+     * Automatically persists changes to config.json if the value changed.
+     * 
+     * @param {string} section - The configuration path (e.g., 'web.services.port')
+     * @param {any} val - The value to set
+     * 
+     * @example
+     * config.setSection('web.services.port', 4200);
+     * config.setSection('log.app.level', 'debug');
+     */
     public setSection(section: string, val) {
         let c = this._cfg;
         if (section.indexOf('.') !== -1) {
@@ -109,6 +182,21 @@ class Config {
         }
     }
 
+    /**
+     * Gets a configuration section value.
+     * 
+     * Supports dotted path notation to retrieve nested configuration values.
+     * Returns a deep copy merged with optional default values.
+     * 
+     * @param {string} [section] - The configuration path (e.g., 'web.services'). If undefined, returns entire config.
+     * @param {any} [opts] - Optional default values to merge with the result
+     * @returns {any} The configuration value (deep copy)
+     * 
+     * @example
+     * const webServices = config.getSection('web.services');
+     * const logLevel = config.getSection('log.app.level');
+     * const fullConfig = config.getSection(); // Returns entire config
+     */
     public getSection(section?: string, opts?: any): any {
         if (typeof (section) === 'undefined') return this._cfg;
         var c: any = this._cfg;
@@ -127,17 +215,49 @@ class Config {
             c = c[section];
         return extend(true, {}, opts || {}, c || {});
     }
+
+    /**
+     * Initializes required data directories.
+     * 
+     * Creates the following directories if they don't exist:
+     * - data/ - General data storage
+     * - data/outQueues/ - Outbound message queue storage
+     */
     public init() {
         let baseDir = process.cwd();
         this.ensurePath(baseDir + '/data/');
         this.ensurePath(baseDir + '/data/outQueues/');
     }
+
+    /**
+     * Ensures a directory path exists, creating it if necessary.
+     * @private
+     * @param {string} dir - The directory path to ensure
+     */
     private ensurePath(dir: string) {
         fs.mkdir(dir, { recursive: true }, (err) => {
             if (err) console.log(`Error creating directory: ${dir} - ${err}`);
         });
     }
 
+    /**
+     * Applies environment variable overrides to configuration.
+     * 
+     * Supports both legacy and new hierarchical environment variables:
+     * 
+     * Legacy variables:
+     * - POOL_HTTP_IP - Backend service IP
+     * - POOL_HTTP_PORT - Backend service port
+     * 
+     * New hierarchical variables (POOL_WEB_* prefix):
+     * - POOL_WEB_SERVERS_HTTP_PORT - HTTP server port
+     * - POOL_WEB_SERVERS_HTTPS_PORT - HTTPS server port
+     * - POOL_WEB_SERVICES_IP - Backend service IP
+     * - POOL_WEB_SERVICES_PORT - Backend service port
+     * - POOL_WEB_SERVICES_PROTOCOL - Backend protocol (http:// or https://)
+     * 
+     * @private
+     */
     private getEnvVariables() {
         // set docker env variables to config.json, if they are set
         let env = process.env;
@@ -209,4 +329,16 @@ class Config {
             });
     }
 }
+
+/**
+ * Singleton configuration instance.
+ * Use this throughout the application to access configuration.
+ * 
+ * @type {Config}
+ * 
+ * @example
+ * import { config } from './config/Config';
+ * 
+ * const port = config.getSection('web.servers.http.port');
+ */
 export var config: Config = new Config();
