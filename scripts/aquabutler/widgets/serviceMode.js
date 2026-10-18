@@ -5,15 +5,12 @@
  * and sends the hash to the server, which forwards to
  * `pool/<id>/command/service/set`.
  *
- * TODO(Ultron/Shuri): the canonical pin_hash derivation per schema v1.0
- * §service/set is `sha256(<install_date_as_MMDD>:<salt>)`. The dashPanel
- * can't know the install date or salt (those live in the HAT ID EEPROM);
- * the canonical construction includes the PIN but the schema doc's
- * literal template doesn't show it. We hash the PIN alone today as the
- * least-bad fallback; the server-side njsPC will still need to combine
- * this with install_date+salt before comparing. Confirm the exact
- * construction with Shuri before any customer-facing deployment. See
- * ~/AquaButler-Server/docs/wiki/mqtt-topic-schema.md §service/set.
+ * pin_hash per schema v1.0 §pool/<id>/command/service/set:
+ *   pin_hash = "sha256:" + lower_hex( sha256( utf8(pin_string) ) )   (Option A)
+ * This widget computes Option A and ships `sha256:<64hex>` to the
+ * server. v1.1 hardening (cluster-secret HMAC, Option C, see schema
+ * open question §9.12) will switch the prefix to `sha256-hmac:` and
+ * add per-deploy provisioning — do NOT preemptively change anything.
  *
  * Cross-references:
  *   ~/AquaButler-Server/docs/wiki/mqtt-topic-schema.md §service/set

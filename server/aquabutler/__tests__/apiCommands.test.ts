@@ -88,6 +88,45 @@ test("sha256Hex: produces 'sha256:<64hex>'", async () => {
   assert.match(h, /^sha256:[a-f0-9]{64}$/);
 });
 
+/**
+ * pin_hash regression — pins sha256Hex to the Option A derivation locked
+ * in docs/wiki/mqtt-topic-schema.md §pool/<id>/command/service/set (v1.0,
+ * doc-fix commit 94bbe3c). Any change to the hash format, hex casing, or
+ * length MUST come with a coordinated spec version bump (v1.1, prefix
+ * becomes `sha256-hmac:` per open question §9.12).
+ *
+ * Known values derived independently with:
+ *   python3 -c "import hashlib; print(hashlib.sha256(b'1234').hexdigest())"
+ *   python3 -c "import hashlib; print(hashlib.sha256(b'0000').hexdigest())"
+ */
+test("sha256Hex: pin_hash known values (Option A, schema v1.0)", async () => {
+  const h1234 = await sha256Hex("1234");
+  const h0000 = await sha256Hex("0000");
+
+  // Pinned known constants — sha256("1234") and sha256("0000").
+  assert.equal(
+    h1234,
+    "sha256:03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+  );
+  assert.equal(
+    h0000,
+    "sha256:9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0",
+  );
+
+  // Shape invariants — locked at the spec level, must hold for any PIN.
+  assert.equal(h1234.startsWith("sha256:"), true);
+  assert.equal(h1234.length, "sha256:".length + 64);
+  assert.equal(h0000.length, "sha256:".length + 64);
+  assert.equal(h1234, h1234.toLowerCase(), "hex must be lowercase");
+  assert.equal(h0000, h0000.toLowerCase(), "hex must be lowercase");
+  assert.equal(/\s/.test(h1234), false, "no whitespace in output");
+  assert.equal(/\s/.test(h0000), false, "no whitespace in output");
+
+  // Distinct inputs → distinct hashes (catches accidental empty-string or
+  // shared-prefix regressions).
+  assert.notEqual(h1234, h0000);
+});
+
 /* ---------- REST integration ---------- */
 
 class FakeMqttClient extends EventEmitter {

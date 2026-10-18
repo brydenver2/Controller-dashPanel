@@ -138,13 +138,14 @@ export function buildAuditEnvelope(
 /**
  * Build a sha256:<hex> hash for service-mode PIN entry.
  *
- * The schema says pin_hash is `sha256(<install_date_as_MMDD>:<salt>)`,
- * but the dashPanel doesn't know the install date or salt (those live
- * in the HAT ID EEPROM). What the dashPanel can do is the salt-side
- * of the proof — compute `sha256(pin)` and send `sha256:<hex>` so the
- * njsPC/REM side can apply install-date+salt and compare against the
- * stored hash. This is the "pin_hash matches HAT ID EEPROM region"
- * check from §Write topics table.
+ * pin_hash per schema v1.0 §pool/<id>/command/service/set:
+ *   pin_hash = "sha256:" + lower_hex( sha256( utf8(pin_string) ) )   (Option A)
+ * Matches what serviceMode.js sends; same Option A the rotary firmware
+ * computes (see ~/AquaButler-Server/src/rotary_display/rotary_display/
+ * modes/service_mode.py:172-175 + eeprom/hat_eeprom.py:222-227).
+ * v1.1 hardening (cluster-secret HMAC, Option C, see schema open
+ * question §9.12) will switch the prefix to `sha256-hmac:` — do NOT
+ * preemptively change anything here.
  *
  * Exported for tests; the actual UI uses Web Crypto SubtleCrypto.
  */
