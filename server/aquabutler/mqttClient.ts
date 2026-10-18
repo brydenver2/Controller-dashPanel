@@ -1,5 +1,5 @@
 /**
- * Per-customer MQTT client for AquaButler (Layer 1).
+ * Per-customer MQTT client for AquaButler (Layer 1 + Layer 2).
  *
  * Lifecycle:
  *   1. The "customer switcher" UI picks an active customer_id.
@@ -51,6 +51,22 @@ export interface PerCustomerMqttClientOptions {
   subscribeFilter?: string;
   /** Inject for tests. Defaults to the mqtt npm package's connect(). */
   factory?: (url: string, opts: mqtt.IClientOptions) => mqtt.MqttClient;
+}
+
+/**
+ * Audit envelope per AquaButler MQTT schema v1.0 §audit/<stream>.
+ * Audit messages use TOP-LEVEL `source` and `user_id` (not wrapped in
+ * `auth:`); `outcome` and `error` are the schema-required durability
+ * fields. See ~/AquaButler-Server/docs/wiki/mqtt-topic-schema.md.
+ */
+export interface AuditEnvelope {
+  ts: string;
+  action: string;
+  params: Record<string, unknown>;
+  source: AuthSource;
+  user_id: string | null;
+  outcome: "executed" | "rejected_safety" | "failed";
+  error: string | null;
 }
 
 /**
@@ -179,6 +195,44 @@ export class PerCustomerMqttClient extends EventEmitter {
     });
   }
 
+  /**
+   * Publish an audit envelope to `pool/<id>/audit/<stream>`.
+   *
+   * Audit messages are NOT wrapped with the `auth:` envelope — the
+   * audit schema puts `source` and `user_id` as top-level fields
+   * directly (per AquaButler MQTT schema v1.0 §audit/<stream>). Use
+   * this helper instead of building the JSON by hand; the consumer
+   * side will reject anything that doesn't match.
+   *
+   * Returns a Promise that resolves when the broker ACKs QoS 1
+   * publish (audit is durable — see schema §QoS).
+   */
+  public publishAudit(
+    streamSuffix: string, // e.g. "/audit/dashpanel_action"
+    entry: AuditEnvelope,
+  ): Promise<void> {
+    if (!this._client || this._closed) {
+      return Promise.reject(new Error("Client not connected"));
+    }
+    const fullTopic = `${poolPrefix(this._opts.customer.id)}${streamSuffix}`;
+    return new Promise<void>((resolve, reject) => {
+      this._client!.publish(
+        fullTopic,
+        JSON.stringify(entry),
+        { qos: 1 },
+        (err) => {
+          if (err) {
+            logger.error(
+              `AquaButler MQTT audit publish failed (${fullTopic}): ${err.message}`,
+            );
+            return reject(err);
+          }
+          resolve();
+        },
+      );
+    });
+  }
+
   /* ---------- internal helpers ---------- */
 
   private _wireEvents(c: mqtt.MqttClient): void {
@@ -241,6 +295,14 @@ export const commandSuffix = {
   manualChlorination: () => `/command/manual/chlorination/set`,
   manualHeater: () => `/command/manual/heater/set`,
   serviceSet: () => `/command/service/set`,
+} as const;
+
+/**
+ * Audit stream suffixes. Only the dashPanel's paired-action stream is
+ * exposed here; manual/service streams are owned by the rotary firmware.
+ */
+export const auditSuffix = {
+  dashpanelAction: () => `/audit/dashpanel_action`,
 } as const;
 
 /**

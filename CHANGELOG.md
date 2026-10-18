@@ -21,6 +21,26 @@
 - Auth strategy (Supabase) tracked in `t_ea19acd3` — owned by `@vision_wallace_bot`.
 - Shared constants module (firmware ↔ dashPanel drift prevention) tracked in `t_17b00b59`.
 
+### Features (Layer 2 — five AquaButler widgets)
+- **Per-customer live state widget** (`scripts/aquabutler/widgets/liveState.{html,js}`): renders pH, ORP, pump state+RPM, pool/air °F, heater setpoint, mode, last_error, errors_24h, WiFi dBm, and a real online/offline pulse on `health/mqtt_connected`. Last-state-wins with a 2s fade; 120s without any message flips the canonical "OFFLINE > 2 min" red banner.
+- **Rotary display audit log widget** (`scripts/aquabutler/widgets/auditLog.{html,js}`): paginated table (last 100 entries, prev/next pager), per-stream filter (manual | service | dashpanel_action | all), CSV export button (`/aquabutler/audit.csv`). Live append via `aquabutler:audit` socket events.
+- **Service mode widget** (`scripts/aquabutler/widgets/serviceMode.{html,js}`): enter/exit/force-exit with 30s confirmation window. Enter+exit require a 4-digit PIN; SHA-256 hashing happens client-side via Web Crypto SubtleCrypto and only `sha256:<hex>` crosses the wire.
+- **Manual command widget** (`scripts/aquabutler/widgets/manualCommand.{html,js}`): pump on/off, filter cycle (1-12 hr), chlorination override (target_orp_mV + duration_min with 10-min hard cap), heater target (60-104 °F). Chlorination is client+server gated against `chem/orp >= 800` per schema v1.0 §Write topics; fail-closed if telemetry hasn't arrived. Every successful publish writes a paired `pool/<id>/audit/dashpanel_action` entry.
+- **Customer switcher sidebar** (`scripts/aquabutler/widgets/customerSidebar.{html,js}`): at-a-glance green/yellow/red status icon per customer (driven by `health/mqtt_connected` and a 120s freshness window). Click delegates to the existing Layer 1 `setActiveCustomer` handler.
+- **Client-side `MQTTBus`** (`scripts/aquabutler/mqttBus.js`): singleton wrapper over the existing socket.io channel — exposes `connect/onState/onChange/onAudit/onConnection/getState/getCustomers/setActiveCustomer/publishManualCommand/publishServiceCommand/getAudit/downloadAuditCsv/sha256Hex/isBypass`. No new sockets; per-customer ACL stays enforced server-side.
+- **Audit envelope builder** (`scripts/aquabutler/auditEnvelope.js`): client-side preview that mirrors the schema v1.0 §audit envelope shape; the server is the canonical emitter, this is purely for instant UI feedback and CSV export shape parity.
+
+### Server (Layer 2 additions)
+- **Per-customer audit buffer** (`server/aquabutler/auditLog.ts`): `AuditLogStore` keeps a per-stream ring buffer (default capacity 100 per stream) for the active customer; emits `appended` for the live socket event; bounded by `setActiveCustomer` resets.
+- **Command endpoints** (`server/aquabutler/api.ts`):
+  - `POST /aquabutler/command/manual` — pump/filter/chlorination/heater. Chlorination runs `checkChlorinationInterlock(state)` against `chem/orp`; on refusal returns `409 rejected_safety` + writes a `rejected_safety` audit entry (no command publish). Successful publishes write a paired `executed` audit entry. Broker publish failures write a paired `failed` audit entry.
+  - `POST /aquabutler/command/service` — enter/exit/force_exit. Enter+exit require `sha256:` pin_hash; force_exit stamps `auth.source = "cloud"` per §service/set schema.
+  - `GET /aquabutler/audit` (paginated JSON) and `GET /aquabutler/audit.csv` (CSV download).
+- **Pre-publish safety interlock** (`server/aquabutler/api.ts:checkChlorinationInterlock`): fails closed if `chem/orp` is missing, NaN, or `>= 800`. Boundary at exactly 800 refuses.
+- **Audit publish helper** (`server/aquabutler/mqttClient.ts:publishAudit`): emits to `pool/<id>/audit/<stream>` with the schema envelope (top-level `source`/`user_id`, NOT the `auth:` wrapper commands use). QoS 1, durable.
+- **Socket bridge update**: `aquabutler:audit` outbound event; inbound audit messages populate the `AuditLogStore` in parallel with the existing `aquabutler:change` event.
+- **Tests**: 21 new tests added (auditLog.test.ts: 6; apiCommands.test.ts: 9 covering interlock/refusal/success/fail-closed + manual+service REST endpoints + force_exit cloud-source; existing mqttTopics/fleet tests unchanged). Total: **67/67 green** via `npm run test:fast` and clean `tsc` build.
+
 ### Notes for upstream merge
 - All AquaButler code lives under `server/aquabutler/`, `scripts/aquabutler/`, `pages/aquabutler/`, and `docs/wiki/2026-10-18-dashpanel-aquabutler-layer1.md` — keep them in dedicated subtrees to ease the next upstream sync.
 - The `aquabutler` block in `defaultConfig.json` is additive (defaults to disabled); `app.ts` and `Server.ts` modifications are minimal and guarded by the same `enabled` flag.

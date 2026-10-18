@@ -21,6 +21,7 @@ import { logger } from "./loggerSafe";
 import { loadAquaButlerConfig } from "./customerConfig";
 import { AquaButlerFleet } from "./fleet";
 import { PoolStateStore } from "./poolState";
+import { AuditLogStore } from "./auditLog";
 import { AquaButlerRoute } from "./api";
 
 export interface AquaButlerServerLike {
@@ -30,6 +31,7 @@ export interface AquaButlerServerLike {
 
 let fleet: AquaButlerFleet | null = null;
 let store: PoolStateStore | null = null;
+let auditLog: AuditLogStore | null = null;
 
 export async function initAquaButlerOnServer(
   server: AquaButlerServerLike,
@@ -44,6 +46,7 @@ export async function initAquaButlerOnServer(
 
   fleet = new AquaButlerFleet(cfg);
   store = new PoolStateStore();
+  auditLog = new AuditLogStore();
 
   const apps = server.expressApps;
   if (apps.length === 0) {
@@ -52,19 +55,25 @@ export async function initAquaButlerOnServer(
     );
   } else {
     for (const app of apps) {
-      AquaButlerRoute.initRoutes(app, { fleet, state: store, cfg });
+      AquaButlerRoute.initRoutes(app, { fleet, state: store, auditLog, cfg });
     }
   }
 
   await fleet.init();
   if (cfg.activeCustomerId) {
     store.setActiveCustomer(cfg.activeCustomerId);
+    auditLog.setActiveCustomer(cfg.activeCustomerId);
   }
 
   // Bridge fleet events to socket.io, if the socket server is ready.
   const sock = server.sockServer;
   if (sock) {
-    AquaButlerRoute.wireSocketBridge(sock, { fleet, state: store, cfg });
+    AquaButlerRoute.wireSocketBridge(sock, {
+      fleet,
+      state: store,
+      auditLog,
+      cfg,
+    });
   } else {
     logger.warn(
       "AquaButler init: no socket server is running yet — bridge will not forward events. Layer 2 widgets may need a reconnect to receive state after the socket server boots.",
@@ -79,6 +88,7 @@ export async function shutdownAquaButler(): Promise<void> {
   await fleet.shutdown();
   fleet = null;
   store = null;
+  auditLog = null;
 }
 
 /** Accessor for tests that need to drive the fleet directly. */
@@ -87,4 +97,7 @@ export function _getFleetForTests(): AquaButlerFleet | null {
 }
 export function _getStoreForTests(): PoolStateStore | null {
   return store;
+}
+export function _getAuditLogForTests(): AuditLogStore | null {
+  return auditLog;
 }
