@@ -1,0 +1,32 @@
+<!--
+  AquaButler customer switcher top-bar fragment.
+
+  Mounted into the existing pages/index.html (or any other AquaButler-
+  facing page) by adding `<div id="aquabutler-customer-host"></div>` and
+  including `scripts/aquabutler/customerSwitcher.js`. The widget reads
+  from /aquabutler/customers and writes to /aquabutler/active-customer;
+  both endpoints are mounted by `server/aquabutler/api.ts` at boot.
+
+  Styling is intentionally bare-bones; Layer 3 (theming) owns the
+  AquaButler branding pass per the dashPanel modernization spec.
+-->
+<div id="aquabutler-customer-host" class="aquabutler-host"></div>
+<style>
+  .aquabutler-host select {
+    font-size: 0.95em;
+    padding: 4px 8px;
+    margin-right: 8px;
+    min-width: 220px;
+  }
+  .aquabutler-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    background: #555;
+    color: #fff;
+  }
+  .aquabutler-pill-good { background: #2e7d32; }
+  .aquabutler-pill-bad  { background: #c62828; }
+  .aquabutler-pill-pending { background: #ef6c00; }
+</style>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pool Control Dashboard - Fixture</title>
+    <!-- Force a theme for the fixture (overrides any localStorage). -->
+    <script>
+        // Set the theme before stylesheets load so the right CSS is requested.
+        var params = new URLSearchParams(window.location.search);
+        var theme = params.get('theme') || 'aqualinkd';
+        try { localStorage.setItem('dashTheme', theme); } catch (e) {}
+    </script>
+    <link rel="stylesheet" type="text/css" href="../node_modules/jquery-ui/jquery-ui.css" />
+    <link rel="stylesheet" type="text/css" href="../node_modules/jquery-ui/jquery-ui.theme.css" />
+    <link id="cssref_glyphs" rel="stylesheet" type="text/css" href="../node_modules/font-awesome/css/all.css" />
+    <link id="cssref_intellibrite" rel="stylesheet" type="text/css" href="../themes/intellibrite.css" />
+    <link id="cssref_widgets" rel="stylesheet" type="text/css" href="../themes/widgets.css" />
+    <link id="cssref_config" rel="stylesheet" type="text/css" href="../themes/configPage.css" />
+    <link id="cssref_dash" rel="stylesheet" type="text/css" href="../themes/dashboard.css" />
+    <link id="cssref_theme" rel="stylesheet" type="text/css" href="../themes/aqualinkd/theme.css" data-theme="aqualinkd" />
+    <!-- Stub the socket before any script tries to use it. -->
+    <script>
+        window.io = function() {
+            var noop = function() {};
+            var sock = {
+                on: noop, off: noop, emit: noop, connect: noop,
+                disconnect: noop, connected: true
+            };
+            return sock;
+        };
+    </script>
+    <script type="text/javascript" src="../node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="../node_modules/jquery-ui/jquery-ui.js"></script>
+    <script type="text/javascript" src="../node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+    <script type="text/javascript" src="../scripts/widgets.js"></script>
+    <script type="text/javascript" src="../scripts/controller.js"></script>
+    <script type="text/javascript" src="../scripts/dashboard.js"></script>
+    <script type="text/javascript" src="../scripts/bodies.js"></script>
+    <script type="text/javascript" src="../scripts/circuits.js"></script>
+    <script type="text/javascript" src="../scripts/pumps.js"></script>
+    <script type="text/javascript" src="../scripts/chemistry.js"></script>
+    <script type="text/javascript" src="../scripts/lightGroups.js"></script>
+    <script type="text/javascript" src="../scripts/schedules.js"></script>
+    <script type="text/javascript" src="../scripts/configPage.js"></script>
+    <style>
+        /* Some padding so the screenshot doesn't clip the floating panels. */
+        body { padding: 6px; }
+    </style>
+</head>
+<body>
+    <div class="dashOuter picDashboard" data-panel="dashboard">
+        <header class="picHeader">
+            <div class="picController picControlPanel control-panel" style="display:block;"></div>
+        </header>
+        <div class="dashContainer">
+            <div class="container1">
+                <div class="picBodies picControlPanel control-panel"></div>
+                <div class="picChemistry picControlPanel control-panel"></div>
+                <div class="picPumps picControlPanel picPumpContainer control-panel"></div>
+                <div class="picSchedules picControlPanel picScheduleContainer control-panel"></div>
+                <div class="picCircuits picControlPanel control-panel"></div>
+                <div class="picLights picControlPanel control-panel"></div>
+                <div class="picFilters picControlPanel control-panel"></div>
+                <div class="picVirtualCircuits picControlPanel control-panel"></div>
+            </div>
+            <div class="container2"></div>
+            <div class="container3"></div>
+        </div>
+        <div class="configContainer"></div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Wait briefly for the theme toggle to mount, then signal ready.
+            setTimeout(function () {
+                document.body.setAttribute('data-rendered', '1');
+            }, 800);
+        });
+    </script>
+</body>
+</html>

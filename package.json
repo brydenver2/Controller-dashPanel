@@ -19,7 +19,9 @@
     "dev:qa": "npm run qa:smoke",
     "dev:qa:cached": "npm run qa:smoke:cached",
     "qa:smoke": "npm run build && node scripts/tests/devQaSmokeWorkflow.js",
-    "qa:smoke:cached": "node scripts/tests/devQaSmokeWorkflow.js"
+    "qa:smoke:cached": "node scripts/tests/devQaSmokeWorkflow.js",
+    "test": "npm run build && node --test dist/server/aquabutler/__tests__/*.test.js",
+    "test:fast": "node --test dist/server/aquabutler/__tests__/*.test.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.3.0",
@@ -27,6 +29,7 @@
     "extend": "^3.0.2",
     "jquery": "^4.0.0",
     "jquery-ui": "^1.14.1",
+    "mqtt": "^5.16.1",
     "multer": "^2.2.0",
     "node-ssdp": "^4.0.1",
     "socket.io": "^4.8.1",

@@ -23,8 +23,33 @@ import { DefaultEventsMap } from "socket.io/dist/typed-events";
 
 // This class serves data and pages for
 export class WebServer {
-    private _servers: ProtoServer[] = []; 
+    private _servers: ProtoServer[] = [];
     constructor() { }
+    /**
+     * Returns every running express.Application across the configured
+     * transports (http / https). Used by AquaButler to mount its
+     * router on each instance with correct CORS / static middleware
+     * ordering. Returns an empty array if nothing is running.
+     */
+    public get expressApps(): express.Application[] {
+        return (this._servers as any[])
+            .filter((s) => s.isRunning && (s as any).app)
+            .map((s) => (s as any).app as express.Application);
+    }
+    /**
+     * Returns the first running socket.io server. AquaButler bridges
+     * its fleet events into this instance. Returns null if no server
+     * has been initialized yet (callers should retry — server boot
+     * may still be in progress).
+     */
+    public get sockServer(): SocketIoServer<DefaultEventsMap, DefaultEventsMap> | null {
+        for (const s of this._servers as any[]) {
+            if (s.isRunning && (s as any).sockServer) {
+                return (s as any).sockServer;
+            }
+        }
+        return null;
+    }
     public init() {
         let cfg = config.getSection('web');
         let srv;

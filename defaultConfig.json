@@ -59,5 +59,14 @@
       "path":  "uploads/"
     }
   },
+  "aquabutler": {
+    "enabled": false,
+    "broker": {
+      "url": "mqtts://mqtt.aquabutlers.com:8883",
+      "clientIdPrefix": "dashpanel"
+    },
+    "activeCustomerId": null,
+    "customers": []
+  },
   "appVersion": "1.0.0"
 }

@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased] - AquaButler fork
+
+### Features
+- **Multi-tenant MQTT shell (Layer 1)**: env-gated (`POOL_AQUABUTLER_ENABLED=true`) per-customer MQTT client connected to `mqtt.aquabutlers.com:8883`, subscribed only to the active customer's `pool/<id>/#`. Customer switcher UI (top-bar jQuery 4 widget) tears down the existing client before building the new one — no leak between customers.
+- **Schema-aligned topic constants**: every publish/subscribe path goes through `server/aquabutler/mqttTopics.ts`, derived verbatim from the canonical `~/AquaButler-Server/docs/wiki/mqtt-topic-schema.md` v1.0 (Shuri, 2026-10-18). Future schema revisions bump the version constant and refactor.
+- **Authentication stub**: returns 401 until `t_ea19acd3` (Vision: Supabase auth) lands. Dev/test bypass via `?xaqb=1` URL param or `X-AquaButler-Bypass: 1` header.
+- **Customer switcher UI**: top-bar dropdown + connection pill; lives at `pages/aquabutler/customerSwitcher.html` + `scripts/aquabutler/customerSwitcher.js`.
+- **REST + Socket.IO integration**: `GET /aquabutler/{customers, state}`, `POST /aquabutler/active-customer`. Live state streamed via the existing Socket.IO channel under `aquabutler:{state, change, connection}` events.
+- **Test infra**: `npm test` runs 46 unit tests across 6 files (mqtt topics / customer config / pool state / MQTT client / fleet orchestrator / auth middleware). Layer 1 changes ship with green tests and no upstream regressions.
+
+### Architecture
+- **Additive by design**: when `POOL_AQUABUTLER_ENABLED` is unset/false, the entire layer is a no-op — the upstream hobbyist single-tenant local-socket flow is unchanged.
+- **Schema in code, not in JSON**: the `aquabutler.customers` block in `defaultConfig.json` / `config.json` is the per-customer config; all topics are derived constants, never hand-typed at publish/subscribe sites.
+- **Library**: `mqtt` (MQTT.js) v5.16.1 — pure-JS, Node 16+. Pin via `package.json`.
+
+### Coordination
+- Layer 2 widgets (live state, audit log, service mode, manual command, customer sidebar) tracked in `t_3e66bc7f`.
+- Layer 3 theming tracked in `t_1e9f6f85`.
+- Auth strategy (Supabase) tracked in `t_ea19acd3` — owned by `@vision_wallace_bot`.
+- Shared constants module (firmware ↔ dashPanel drift prevention) tracked in `t_17b00b59`.
+
+### Notes for upstream merge
+- All AquaButler code lives under `server/aquabutler/`, `scripts/aquabutler/`, `pages/aquabutler/`, and `docs/wiki/2026-10-18-dashpanel-aquabutler-layer1.md` — keep them in dedicated subtrees to ease the next upstream sync.
+- The `aquabutler` block in `defaultConfig.json` is additive (defaults to disabled); `app.ts` and `Server.ts` modifications are minimal and guarded by the same `enabled` flag.
+- 45 new tests added; no existing tests were modified (the dashPanel ships a manual smoke workflow, not unit tests, so no upstream tests to be broken).
+
 ## [10.0.1] - 2026-08-10
 
 ### Features
