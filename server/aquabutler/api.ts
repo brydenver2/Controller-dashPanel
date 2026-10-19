@@ -409,7 +409,7 @@ export class AquaButlerRoute {
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="aquabutler-audit-${deps.auditLog.activeCustomerId || "all"}.csv"`,
+        `attachment; filename="${auditCsvFilename(deps.auditLog.activeCustomerId)}"`,
       );
       res.send(csv);
     });
@@ -515,12 +515,21 @@ function manualActionToAuditAction(
 /**
  * Render the audit log to CSV. RFC 4180-ish (no trailing newline, quote
  * everything that contains a separator or a quote).
+ *
+ * Per kanban t_3790f4b4 (Bryan's 3rd branding answer), every audit row
+ * is prefixed with the literal brand line `AquaButler Automation`. The
+ * CSV carries a leading `brand` column so spreadsheet parsers don't
+ * lose it as a stray prefix — the value is what the user sees as the
+ * "CSV footer" line. No year, no parent brand, no URL.
+ *
+ * Exported for tests; the route handler is the only other caller.
  */
-function renderAuditCsv(entries: RetainedAuditEntry[]): string {
-  const header = ["ts", "action", "stream", "source", "user_id", "outcome", "error", "params"];
+export function renderAuditCsv(entries: RetainedAuditEntry[]): string {
+  const header = ["brand", "ts", "action", "stream", "source", "user_id", "outcome", "error", "params"];
   const rows: string[][] = [header];
   for (const e of entries) {
     rows.push([
+      "AquaButler Automation",
       e.ts,
       e.action,
       e.stream,
@@ -532,6 +541,21 @@ function renderAuditCsv(entries: RetainedAuditEntry[]): string {
     ]);
   }
   return rows.map((r) => r.map(csvEscape).join(",")).join("\n") + "\n";
+}
+
+/**
+ * Build the audit CSV attachment filename. Pattern per canonical-messages.md
+ * (kanban t_1e9f6f85): `aquabutler-automation-<customer_id>-<YYYY-MM-DD>.csv`.
+ * Falls back to `aquabutler-automation-all-<date>.csv` when there is no
+ * active customer. The date is computed in UTC so successive exports on
+ * the same calendar day produce a stable filename regardless of local TZ.
+ *
+ * Exported for tests; the route handler is the only other caller.
+ */
+export function auditCsvFilename(activeCustomerId: string | null): string {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+  const safeCustomer = (activeCustomerId || "all").replace(/[^a-zA-Z0-9._-]/g, "_");
+  return `aquabutler-automation-${safeCustomer}-${today}.csv`;
 }
 
 function csvEscape(v: string): string {

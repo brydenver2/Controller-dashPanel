@@ -7,26 +7,23 @@
   from /aquabutler/customers and writes to /aquabutler/active-customer;
   both endpoints are mounted by `server/aquabutler/api.ts` at boot.
 
-  Styling is intentionally bare-bones; Layer 3 (theming) owns the
-  AquaButler branding pass per the dashPanel modernization spec.
+  Layer 3 (per kanban t_1e9f6f85) renders the AquaButler sub-mark
+  placeholder at the left of the host element so the brand identity
+  reads on every page that mounts this fragment. The placeholder is
+  `aquabutler-submark-placeholder-2026-10-18.jpg` (SHA da3f913e…) on
+  `ultron-aquabutler/AquaButler-Hardware:main:brand/`, copied to
+  `themes/aquabutler/assets/` so the relative path is stable.
 -->
-<div id="aquabutler-customer-host" class="aquabutler-host"></div>
+<div id="aquabutler-customer-host" class="aquabutler-host">
+  <span class="aqb-brand" aria-label="AquaButler Automation">
+    <img src="themes/aquabutler/assets/aquabutler-submark-placeholder-2026-10-18.jpg" alt="AquaButler" />
+    <span>AquaButler<span class="aqb-brand-sub">Automation</span></span>
+  </span>
+</div>
 <style>
-  .aquabutler-host select {
-    font-size: 0.95em;
-    padding: 4px 8px;
-    margin-right: 8px;
-    min-width: 220px;
-  }
-  .aquabutler-pill {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 0.85em;
-    background: #555;
-    color: #fff;
-  }
-  .aquabutler-pill-good { background: #2e7d32; }
-  .aquabutler-pill-bad  { background: #c62828; }
-  .aquabutler-pill-pending { background: #ef6c00; }
+  /* The switcher dropdown + connection pill are styled in
+   * themes/aquabutler/widgets.css so every page that mounts the
+   * fragment picks up the AquaButler palette. Keep this block empty
+   * intentionally — anything customer-switcher-specific goes in the
+   * shared widgets.css. */
 </style>

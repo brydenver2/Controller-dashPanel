@@ -49,7 +49,14 @@
   }
 
   function renderDropdown($host) {
-    $host.empty();
+    // The AquaButler brand chip is rendered statically in
+    // pages/aquabutler/customerSwitcher.html (Layer 3 — see
+    // docs/wiki/2026-10-19-dashpanel-aquabutler-layer3.md). DO NOT empty
+    // $host: only append the dropdown + connection pill after the chip.
+    // Removing the chip would erase the AquaButler identity.
+    const $brand = $host.find(".aqb-brand").first();
+    $host.find("select, #aquabutler-conn").remove();
+
     const $select = $("<select id='aquabutler-customer'></select>");
     if (state.customers.length === 0) {
       $select.append(
@@ -66,7 +73,11 @@
         );
       }
     }
-    $host.append($select);
+    if ($brand.length > 0) {
+      $brand.after($select);
+    } else {
+      $host.append($select);
+    }
     $host.append(
       $(
         "<span id='aquabutler-conn' class='aquabutler-pill'>offline</span>",

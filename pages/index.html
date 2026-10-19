@@ -71,14 +71,12 @@
                 $(document.body).css('background-image', `url(${background})`);
             else
                 $(document.body).css('background-image', '');
-            // Honor prefers-color-scheme on first visit, before reading stored pref.
-            // Maps 'dark' -> aqualinkd-dark and 'light' -> aqualinkd when no stored value.
-            var theme = getStorage('dashTheme', null);
-            if (theme === null || theme === undefined || theme === '') {
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                theme = prefersDark ? 'aqualinkd-dark' : 'aqualinkd';
-                setStorage('dashTheme', theme);
-            }
+            // AquaButler theme only (locked 2026-10-19 per kanban
+            // t_1e9f6f85). The previous aqualinkd / aqualinkd-dark toggle
+            // is gone — there is no light/dark selector, the AquaButler
+            // navy/light palette is the single canonical theme.
+            var theme = 'aquabutler';
+            setStorage('dashTheme', theme);
             $('<link id="cssref_theme" rel="stylesheet" type="text/css" href="themes/' + theme + '/theme.css" />').appendTo($('head')).attr('data-theme', theme);
             var bstyle = getStorage('dashBackgroundStyle', '');
         });
@@ -113,47 +111,15 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
-            // Theme mode toggle (light <-> dark within the AqualinkD family).
-            // Mounts a sun/moon button into the header; flips dashTheme between
-            // 'aqualinkd' and 'aqualinkd-dark' using the same <link> swap pattern
-            // as the Settings picker. Persists to localStorage and respects the
-            // existing Settings UI (a manual theme choice always wins).
-            (function mountThemeToggle() {
-                var LIGHT = 'aqualinkd';
-                var DARK = 'aqualinkd-dark';
-                var current = getStorage('dashTheme', LIGHT);
-                var btn = $('<div class="picThemeToggle" role="button" tabindex="0" aria-label="Toggle dark mode"></div>');
-                btn.append($('<i class="fas fa-moon"></i>'));
-                btn.on('click keypress', function (evt) {
-                    if (evt.type === 'keypress' && evt.which !== 13 && evt.which !== 32) return;
-                    var cur = getStorage('dashTheme', LIGHT);
-                    var next = cur === DARK ? LIGHT : DARK;
-                    setStorage('dashTheme', next);
-                    var ss = $(document).find('link[id="cssref_theme"]');
-                    if (ss.length > 0) {
-                        ss[0].href = 'themes/' + next + '/theme.css';
-                    } else {
-                        $('<link id="cssref_theme" rel="stylesheet" type="text/css" href="themes/' + next + '/theme.css" />')
-                            .appendTo($('head')).attr('data-theme', next);
-                    }
-                    // Notify any listeners (e.g., Settings picker) of the change.
-                    $(document).trigger('themeChanged', { theme: next });
-                });
-                // Defer until header exists. The controller widget renders into
-                // div.picHeader on socket connect; retry briefly.
-                var attempts = 0;
-                var placeInto = function () {
-                    var header = $('div.picHeader').first();
-                    if (header.length === 0) {
-                        if (attempts++ < 20) setTimeout(placeInto, 150);
-                        return;
-                    }
-                    if (header.find('.picThemeToggle').length === 0) btn.appendTo(header);
-                };
-                placeInto();
-                // Also re-attach when the controller re-renders (rare; on reconnect).
-                $(document).on('controllerRendered', placeInto);
-            })();
+            // No theme toggle — the AquaButler theme is canonical and only
+            // (see pages/index.html bootstrap above for the lock).
+            // Any prior stored dashTheme='aqualinkd' / 'aqualinkd-dark' is
+            // still loaded as a fallback for one visit so a stale localStorage
+            // does not flash unstyled content, then overwritten on next reload.
+            var stored = getStorage('dashTheme', 'aquabutler');
+            if (stored !== 'aquabutler') {
+                setStorage('dashTheme', 'aquabutler');
+            }
 
             var background = getStorage('dashBackground', '');
             if (typeof background !== 'undefined' && background !== '')

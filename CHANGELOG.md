@@ -41,10 +41,19 @@
 - **Socket bridge update**: `aquabutler:audit` outbound event; inbound audit messages populate the `AuditLogStore` in parallel with the existing `aquabutler:change` event.
 - **Tests**: 21 new tests added (auditLog.test.ts: 6; apiCommands.test.ts: 9 covering interlock/refusal/success/fail-closed + manual+service REST endpoints + force_exit cloud-source; existing mqttTopics/fleet tests unchanged). Total: **67/67 green** via `npm run test:fast` and clean `tsc` build.
 
+### Features (Layer 3 — AquaButler theme + canonical messages + CSV footer)
+- **New full AquaButler theme (`themes/aquabutler/`)**: navy `#0050b3` header + light `#f5f8fc` background + alert `#dc2626` palette per kanban `t_1e9f6f85`. System default font (no custom font). The AquaButler sub-mark placeholder (`aquabutler-submark-placeholder-2026-10-18.jpg`, SHA `da3f913e…`) is rendered in `.picHeader::before` so the brand identity is visible on every page that mounts the standard pool controller header.
+- **AquaButler is the DEFAULT theme** (not a toggle, not an overlay on aqualinkd-dark). `pages/index.html` and `pages/messageManager.html` both pin `theme = 'aquabutler'` on every load. The previous `aqualinkd` / `aqualinkd-dark` light/dark toggle is removed; `.picThemeToggle { display: none; }` enforces the no-toggle contract for any stale localStorage entries. Any stored `dashTheme` value that isn't `aquabutler` is rewritten on next reload.
+- **Customer switcher renders the AquaButler brand chip + logo** (`pages/aquabutler/customerSwitcher.html`): navy background, two-tone "AquaButler / Automation" wordmark, the sub-mark placeholder at the left of the host element. `scripts/aquabutler/customerSwitcher.js` was updated to preserve the brand chip across re-renders (the old `$host.empty()` would have wiped it on every customer list refresh).
+- **CSV footer line** (`server/aquabutler/api.ts:renderAuditCsv`): every audit row is prefixed with the literal brand line `AquaButler Automation`. The CSV carries a leading `brand` column so spreadsheet parsers don't lose the value as a stray prefix. Filename pattern per `canonical-messages.md`: `aquabutler-automation-<customer_id>-<YYYY-MM-DD>.csv` (UTC date, sanitized customer id, `all` fallback when no active customer).
+- **Tests**: 7 new tests added (`server/aquabutler/__tests__/auditCsv.test.ts`) covering brand-column header, brand-line prefix on every row, RFC 4180-ish escaping for cells containing commas/quotes, filename customer-id embedding, `all` fallback, and unsafe-character sanitization in the filename. Also asserts `themes/aquabutler/widgets.css` declares the navy `#0050b3` and alert `#dc2626` brand colors used by the customer switcher brand chip and offline banner. Total: **75/75 green** via `npm run test:fast` and clean `tsc` build.
+
 ### Notes for upstream merge
 - All AquaButler code lives under `server/aquabutler/`, `scripts/aquabutler/`, `pages/aquabutler/`, and `docs/wiki/2026-10-18-dashpanel-aquabutler-layer1.md` — keep them in dedicated subtrees to ease the next upstream sync.
 - The `aquabutler` block in `defaultConfig.json` is additive (defaults to disabled); `app.ts` and `Server.ts` modifications are minimal and guarded by the same `enabled` flag.
-- 45 new tests added; no existing tests were modified (the dashPanel ships a manual smoke workflow, not unit tests, so no upstream tests to be broken).
+- 52 new tests added; no existing tests were modified (the dashPanel ships a manual smoke workflow, not unit tests, so no upstream tests to be broken).
+- Layer 3 is a **directional change**: removing the aqualinkd/aqualinkd-dark toggle is intentional per Bryan's "full AquaButler theme" lock. The existing themes stay on disk for reference but are no longer selectable from the UI.
+- The AquaButler sub-mark placeholder is the canonical logo until the graphic designer delivers the real mascot. Robot mascot v5 is preserved in `ultron-aquabutler/AquaButler-Hardware:main:brand/` for the designer's reference but is NOT shipped in the dashPanel theme.
 
 ## [10.0.1] - 2026-08-10
 

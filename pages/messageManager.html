@@ -40,38 +40,17 @@
     </style>
     <script type="text/javascript">
         // Add in the current theme for the pool controller.
-        // Honor prefers-color-scheme on first visit before reading stored pref.
-        var theme = getStorage('dashTheme', null);
-        if (theme === null || theme === undefined || theme === '') {
-            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            theme = prefersDark ? 'aqualinkd-dark' : 'aqualinkd';
-            setStorage('dashTheme', theme);
+        // AquaButler theme only (locked 2026-10-19 per kanban t_1e9f6f85) —
+        // no light/dark selector. Falls through to 'aquabutler' on any
+        // prior stored preference and rewrites localStorage on next reload.
+        var theme = getStorage('dashTheme', 'aquabutler');
+        if (theme !== 'aquabutler') {
+            setStorage('dashTheme', 'aquabutler');
+            theme = 'aquabutler';
         }
         $('<link id="cssref_theme" rel="stylesheet" type="text/css" href="themes/' + theme + '/theme.css" />').appendTo($('head'));
-        // Mount the same light/dark toggle as index.html (shared header).
-        $(function () {
-            var LIGHT = 'aqualinkd';
-            var DARK = 'aqualinkd-dark';
-            var btn = $('<div class="picThemeToggle" role="button" tabindex="0" aria-label="Toggle dark mode"></div>');
-            btn.append($('<i class="fas fa-moon"></i>'));
-            btn.on('click keypress', function (evt) {
-                if (evt.type === 'keypress' && evt.which !== 13 && evt.which !== 32) return;
-                var cur = getStorage('dashTheme', LIGHT);
-                var next = cur === DARK ? LIGHT : DARK;
-                setStorage('dashTheme', next);
-                var ss = $(document).find('link[id="cssref_theme"]');
-                if (ss.length > 0) ss[0].href = 'themes/' + next + '/theme.css';
-                else $('<link id="cssref_theme" rel="stylesheet" type="text/css" href="themes/' + next + '/theme.css" />').appendTo($('head')).attr('data-theme', next);
-            });
-            var attempts = 0;
-            var placeInto = function () {
-                var header = $('div.picHeader').first();
-                if (header.length === 0) { if (attempts++ < 20) setTimeout(placeInto, 150); return; }
-                if (header.find('.picThemeToggle').length === 0) btn.appendTo(header);
-            };
-            placeInto();
-            $(document).on('controllerRendered', placeInto);
-        });
+        // No theme toggle is mounted — see .picThemeToggle { display: none; }
+        // in themes/aquabutler/theme.css for the intentional blanking.
     </script>
 
 </head>
