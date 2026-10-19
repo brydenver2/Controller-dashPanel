@@ -1,0 +1,112 @@
+<!--
+  AquaButler manual command widget (Layer 2, item 4).
+
+  Mounted into any AquaButler-facing page by adding
+  `<div id="aquabutler-manual-command-host"></div>` and including
+  `scripts/aquabutler/widgets/manualCommand.js`.
+
+  Pump on/off, filter cycle, chlorination override, heater target —
+  each with a 30-second confirmation window per the canonical safety UX.
+
+  Chlorination refuses if `chem/orp >= 800` per schema v1.0 §Write
+  topics table (the server-side interlock runs the check and returns
+  409 + writes a `rejected_safety` audit entry). The widget disables
+  the chlorination button if telemetry isn't fresh as a UX hint, but
+  the server is the authoritative gate.
+-->
+<div id="aquabutler-manual-command-host" class="aquabutler-host">
+  <div class="aqb-manual-command">
+    <div class="aqb-row">
+      <h4>Pump</h4>
+      <button type="button" class="aqb-cmd" data-action="pump" data-state="on">Pump on</button>
+      <button type="button" class="aqb-cmd" data-action="pump" data-state="off">Pump off</button>
+    </div>
+    <div class="aqb-row">
+      <h4>Filter cycle</h4>
+      <label>Hours:
+        <input type="number" class="aqb-cmd-filter-hours" min="1" max="12" value="4" />
+      </label>
+      <button type="button" class="aqb-cmd" data-action="filter">Run filter cycle</button>
+    </div>
+    <div class="aqb-row">
+      <h4>Chlorination override</h4>
+      <label>Target ORP (mV):
+        <input type="number" class="aqb-cmd-chlor-target" min="0" max="900" value="700" />
+      </label>
+      <label>Min:
+        <input type="number" class="aqb-cmd-chlor-min" min="1" max="10" value="5" />
+      </label>
+      <button type="button" class="aqb-cmd" data-action="chlorination" data-requires-orp="lt800">Override</button>
+      <span class="aqb-cmd-chlor-status" title="chem/orp telemetry"></span>
+    </div>
+    <div class="aqb-row">
+      <h4>Heater target</h4>
+      <label>°F:
+        <input type="number" class="aqb-cmd-heater-target" min="60" max="104" value="82" />
+      </label>
+      <button type="button" class="aqb-cmd" data-action="heater">Set heater</button>
+    </div>
+
+    <div class="aqb-cmd-confirm-bar" hidden>
+      <span class="aqb-cmd-confirm-text"></span>
+      <button type="button" class="aqb-cmd-confirm">Confirm</button>
+      <button type="button" class="aqb-cmd-cancel">Cancel</button>
+    </div>
+
+    <div class="aqb-cmd-message" hidden></div>
+  </div>
+</div>
+<style>
+  .aqb-manual-command {
+    display: grid;
+    gap: 12px;
+  }
+  .aqb-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .aqb-row h4 {
+    margin: 0;
+    min-width: 160px;
+    color: #555;
+  }
+  .aqb-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .aqb-row input[type="number"] {
+    width: 80px;
+    padding: 4px 6px;
+  }
+  .aqb-cmd-chlor-status {
+    font-size: 0.85em;
+    color: #888;
+  }
+  .aqb-cmd-chlor-status.aqb-safe { color: #2e7d32; }
+  .aqb-cmd-chlor-status.aqb-unsafe { color: #c62828; }
+  .aqb-cmd-confirm-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 8px;
+    background: rgba(239, 108, 0, 0.1);
+    border-radius: 4px;
+  }
+  button.aqb-confirm-pending {
+    background: #ef6c00;
+    color: #fff;
+    border-color: #ef6c00;
+  }
+  button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .aqb-cmd-message {
+    font-size: 0.85em;
+  }
+  .aqb-cmd-message.aqb-msg-error { color: #c62828; }
+  .aqb-cmd-message.aqb-msg-ok { color: #2e7d32; }
+</style>

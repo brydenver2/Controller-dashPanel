@@ -1,0 +1,70 @@
+// colors.scss — AqualinkD design language, DARK variant
+// Same CSS-variable contract as themes/aqualinkd/colors.scss; only the
+// semantic color values are inverted / shifted to a dark background.
+// Tile geometry, type scale, and component dimensions stay identical so the
+// widgets.scss source can be shared verbatim with the light theme.
+
+@import '../mixins/gradients.scss';
+
+// ----- Geometry / typography (identical to light theme) -----
+$border_radius: 10px;
+$panel_border_radius: 20px;
+$outline_border: solid 1px rgb(58, 58, 58);
+
+$font_family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
+$font_weight: 600;
+$font_size_base: 14px;
+$fonts: $font_family;
+
+$tile_width: 100px;
+$tile_icon_height: 35px;
+$tile_name_height: 32px;
+$tile_name_height1line: 17px;
+$tile_status_height: 15px;
+$tile_grid_gap: 10px;
+$tile_name_lineheight: 1.2;
+$tile_name_charlimit: 12;
+
+$slider_height: 20px;
+$slider_ball: 30;
+$radio_ball: 20px;
+
+// ----- Dark palette -----
+// Surfaces use a near-black neutral. Header keeps the steel-blue accent but
+// at a slightly cooler hue so it reads as a "deep" variant of the light theme.
+
+$body_background: rgb(18, 20, 24);   // page bg, dark grey-blue
+$body_text: rgb(232, 234, 238);      // near-white text
+
+$header_background: rgb(32, 56, 78); // deeper steel-blue than light
+$header_text: rgb(245, 247, 250);
+
+$panel_background: rgb(28, 30, 36);  // slightly lighter than body so panels "float"
+$panel_border_color: rgb(58, 60, 68);
+
+$tile_background: rgb(46, 50, 58);
+$tile_text: rgb(196, 200, 208);
+$tile_on_background: rgb(58, 64, 76);
+$tile_on_text: rgb(255, 255, 255);
+$tile_status_text: rgb(150, 154, 162);
+
+// Status accent colors — kept close to the light values so heat/cool/alert
+// signals remain legible against the dark surfaces. Saturation nudged down
+// so they don't vibrate on a dark page.
+$value_normal: rgb(72, 175, 240);    // slightly lighter than #049FF8
+$value_attention: rgb(255, 175, 40);
+$value_outofrange: rgb(255, 110, 40);
+
+$heat_color: rgb(255, 138, 32);
+$cool_color: rgb(72, 175, 240);
+$enabled_color: rgb(110, 200, 60);
+$disabled_bg: rgb(60, 64, 72);
+$disabled_fg: rgb(170, 174, 182);
+
+$error_background: rgb(150, 48, 48);
+$slider_highlight: rgb(72, 175, 240);
+$slider_lowlight: rgb(58, 62, 70);
+$radio_highlight: rgb(72, 175, 240);
+$radio_lowlight: rgb(58, 62, 70);
+
+$input_background: rgb(38, 42, 50);

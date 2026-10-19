@@ -1,0 +1,396 @@
+/*
+ * AquaButler theme — full AquaButler branding per kanban t_1e9f6f85.
+ *
+ * Locked palette (canonical-messages.md):
+ *   primary navy  : #0050b3   (hsl 210 100% 28%)
+ *   background    : #f5f8fc   (hsl 210 30% 98%)
+ *   alert red     : #dc2626
+ *   typography    : system default font (no custom font)
+ *   logo          : ./assets/aquabutler-submark-placeholder-2026-10-18.jpg
+ *
+ * Selector surface mirrors themes/aqualinkd-dark/theme.css so the
+ * widgets.css contract carries over unchanged. CSS variables are
+ * declared on :root so the AquaButler-specific host widgets (see
+ * scripts/aquabutler/widgets/*.html) can read them.
+ *
+ * This is the DEFAULT theme — pages/index.html and
+ * pages/messageManager.html both pin to it. There is no light/dark
+ * toggle: Bryan locked "full AquaButler theme" on 2026-10-19.
+ */
+
+:root {
+  --fonts: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --body_background: #f5f8fc;
+  --body_text: #2b2f36;
+  --head_background: #0050b3;
+  --head_text: #ffffff;
+  --options_pane_background: #ffffff;
+  --options_pane_bordercolor: #cfd8e3;
+  --tile_background: #ffffff;
+  --tile_text: #2b2f36;
+  --tile_on_background: #0050b3;
+  --tile_on_text: #ffffff;
+  --tile_status_text: #5b6470;
+  --value_tile_normal_color: #0050b3;
+  --value_tile_attention_color: #b45309;
+  --value_tile_outofrange_color: #dc2626;
+  --options_slider_highlight: #0050b3;
+  --options_slider_lowlight: #cfd8e3;
+  --options_radio_highlight: #0050b3;
+  --options_radio_lowlight: #cfd8e3;
+  --error_background: #dc2626;
+  --csinputcell_background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--body_background);
+  color: var(--body_text);
+  font-family: var(--fonts);
+  font-weight: 400;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Header is the AquaButler navy with the sub-mark placeholder inline. */
+.picHeader {
+  background-color: var(--head_background);
+  color: var(--head_text);
+  padding: 8px 14px;
+  border-radius: 5px;
+  margin: 8px 8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.picHeader::before {
+  content: "";
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background-image: url("./assets/aquabutler-submark-placeholder-2026-10-18.jpg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 4px;
+}
+
+.picHeader .picController.control-panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.control-panel,
+.popover {
+  vertical-align: top;
+  display: inline-block;
+  margin: 0.4rem 0.2rem;
+  padding: 0.6em;
+  border: 1px solid var(--options_pane_bordercolor);
+  border-radius: 12px;
+  background-color: var(--options_pane_background);
+  box-shadow: none;
+}
+
+.control-panel-title {
+  font-weight: 700;
+  color: var(--head_background);
+  border-bottom: 2px solid var(--value_tile_normal_color);
+  white-space: nowrap;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.picTile {
+  background-color: var(--tile_background);
+  color: var(--tile_text);
+  border: 1px solid var(--options_pane_bordercolor);
+  border-radius: 10px;
+  padding: 5px;
+  width: 100px;
+  height: 100px;
+  opacity: 0.95;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.picTile.is-on {
+  background-color: var(--tile_on_background);
+  color: var(--tile_on_text);
+  border-color: var(--tile_on_background);
+  opacity: 1;
+}
+
+.picTile.is-flash {
+  animation: aquabutler-tile-flash 2s infinite;
+}
+
+@keyframes aquabutler-tile-flash {
+  0%, 100% {
+    background-color: var(--tile_on_background);
+    opacity: 1;
+  }
+  50% {
+    background-color: var(--tile_background);
+    opacity: 0.95;
+  }
+}
+
+.picTile .picTileIcon {
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  color: var(--head_background);
+}
+
+.picTile.is-on .picTileIcon {
+  color: var(--tile_on_text);
+}
+
+.picTile .picTileName {
+  height: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.picTile .picTileStatus {
+  color: var(--tile_status_text);
+  height: 15px;
+  font-size: 12px;
+}
+
+.picTileValue {
+  background-color: var(--value_tile_normal_color);
+  color: #fff;
+  border-radius: 18px;
+  height: 35px;
+  min-width: 35px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 35px;
+  font-weight: 600;
+}
+
+.picTileValue.is-heat { background-color: #b45309; }
+.picTileValue.is-cool { background-color: var(--value_tile_normal_color); }
+.picTileValue.is-enabled { background-color: #15803d; }
+.picTileValue.is-disabled { background-color: #94a3b8; }
+.picTileValue.is-attention { background-color: var(--value_tile_attention_color); }
+.picTileValue.is-outofrange { background-color: var(--value_tile_outofrange_color); }
+
+.options-pane,
+.options_pane {
+  background-color: var(--options_pane_background);
+  border: 1px solid var(--options_pane_bordercolor);
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.options-title {
+  font-weight: 700;
+  color: var(--head_background);
+  margin-bottom: 8px;
+}
+
+.option-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.option-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.option-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--options_slider_lowlight);
+  border-radius: 22px;
+  transition: 0.2s;
+}
+
+.option-switch .slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  top: 2px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.option-switch input:checked + .slider {
+  background-color: var(--options_slider_highlight);
+}
+
+.option-switch input:checked + .slider::before {
+  transform: translateX(22px);
+}
+
+.option-slider {
+  width: 100%;
+  appearance: none;
+  height: 6px;
+  background: var(--options_slider_lowlight);
+  border-radius: 3px;
+  outline: none;
+}
+
+.option-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--options_slider_highlight);
+  cursor: pointer;
+}
+
+.option-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--options_slider_highlight);
+  cursor: pointer;
+  border: 0;
+}
+
+.option-radio-container {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 6px 6px 0;
+}
+
+.option-radio-value {
+  border: 1px solid var(--options_pane_bordercolor);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: var(--options_pane_background);
+  color: var(--body_text);
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.option-radio-container input:checked + .option-radio-value {
+  background: var(--options_radio_highlight);
+  color: #fff;
+  border-color: var(--options_radio_highlight);
+}
+
+.is-error { color: var(--error_background); font-weight: 600; }
+.is-warn  { color: var(--value_tile_attention_color); font-weight: 600; }
+.is-ok    { color: #15803d; font-weight: 600; }
+
+.dashOuter {
+  background-color: var(--body_background);
+  color: var(--body_text);
+  padding: 0 12px;
+}
+
+.dashContainer,
+.control-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+/* AquaButler has no light/dark toggle — the moon-button from
+ * aqualinkd-dark is intentionally absent. Any leftover references
+ * are styled as a flat brand chip so they don't render as a control. */
+.picThemeToggle {
+  display: none;
+}
+
+/* Headings — navy per canonical-messages.md. */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--head_background);
+  font-weight: 700;
+}
+
+.field-text,
+.fld-value {
+  color: var(--body_text);
+}
+
+.picAccordian-title {
+  color: var(--head_background);
+  font-weight: 600;
+}
+
+.cs_deletebutton,
+.cs_commandcell,
+.cs_devicecell,
+.cs_inputcell {
+  background-color: var(--options_pane_background);
+  color: var(--body_text);
+  border-color: var(--options_pane_bordercolor);
+}
+
+.cs_helpleft,
+.cs_helpright {
+  color: var(--tile_status_text);
+  font-size: 12px;
+}
+
+.picPumpOn { color: #15803d; }
+.picPumpOff { color: #94a3b8; }
+.picPumpRPM { color: var(--head_background); }
+
+.picIntelliBriteIcon {
+  color: var(--head_background);
+}
+
+.picBody[data-ison=false] .picBodyTemp {
+  color: var(--tile_status_text);
+}
+
+.picUnits {
+  color: var(--tile_status_text);
+  font-size: 75%;
+}
+
+body {
+  font-family: var(--fonts);
+  font-size: 14px;
+  background-color: var(--body_background);
+  color: var(--body_text);
+}
+
+@media (max-width: 540px) {
+  .picHeader {
+    flex-wrap: wrap;
+    padding: 6px 10px;
+  }
+  .picHeader::before {
+    width: 28px;
+    height: 28px;
+  }
+}

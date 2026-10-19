@@ -1,0 +1,62 @@
+<!--
+  AquaButler customer switcher sidebar (Layer 2, item 5).
+
+  Mounted into any AquaButler-facing page by adding
+  `<div id="aquabutler-sidebar-host"></div>` and including
+  `scripts/aquabutler/widgets/customerSidebar.js`.
+
+  Reads the customer list from /aquabutler/customers (Layer 1's
+  endpoint). Color-codes per pool/<id>/health/system — but the schema
+  v1.0 actually uses a flat `pool/<id>/health/<check>` namespace per
+  metric (cpu_temp_c, mqtt_connected, ...) rather than the
+  `health/system` aggregated form the card body mentions. We treat
+  any fresh health message as "green"; absence for >120s flips to
+  yellow; an `mqtt_connected: false` (or absent) flips to red.
+-->
+<div id="aquabutler-sidebar-host" class="aquabutler-host">
+  <div class="aqb-sidebar">
+    <div class="aqb-sidebar-header">Customers</div>
+    <ul class="aqb-sidebar-list"></ul>
+  </div>
+</div>
+<style>
+  .aqb-sidebar-header {
+    font-weight: 600;
+    padding: 8px 12px;
+    color: #555;
+    border-bottom: 1px solid #eee;
+  }
+  .aqb-sidebar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .aqb-sidebar-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f3f3;
+  }
+  .aqb-sidebar-list li:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+  .aqb-sidebar-list li.aqb-active {
+    background: rgba(46, 125, 50, 0.12);
+    font-weight: 600;
+  }
+  .aqb-sidebar-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .aqb-sidebar-icon.aqb-status-green { background: #2e7d32; }
+  .aqb-sidebar-icon.aqb-status-yellow { background: #ef6c00; }
+  .aqb-sidebar-icon.aqb-status-red { background: #c62828; }
+  .aqb-sidebar-icon.aqb-status-unknown { background: #999; }
+  .aqb-sidebar-name {
+    flex-grow: 1;
+  }
+</style>

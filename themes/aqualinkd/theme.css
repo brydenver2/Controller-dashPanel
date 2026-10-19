@@ -1,0 +1,571 @@
+:root {
+  --fonts: HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
+  --body_background: rgb(235, 235, 235);
+  --body_text: rgb(0, 0, 0);
+  --head_background: rgb(43, 106, 143);
+  --head_text: #fff;
+  --options_pane_background: rgb(245, 245, 245);
+  --options_pane_bordercolor: rgb(124, 124, 124);
+  --tile_background: rgb(220, 220, 220);
+  --tile_text: rgb(110, 110, 110);
+  --tile_on_background: #fff;
+  --tile_on_text: #000;
+  --tile_status_text: rgb(87, 87, 87);
+  --value_tile_normal_color: rgb(4, 159, 248);
+  --value_tile_attention_color: rgb(255, 160, 0);
+  --value_tile_outofrange_color: rgb(255, 100, 0);
+  --options_slider_highlight: #2196F3;
+  --options_slider_lowlight: rgb(211, 211, 211);
+  --options_radio_highlight: #2196F3;
+  --options_radio_lowlight: rgb(211, 211, 211);
+  --error_background: rgb(143, 43, 43);
+  --csinputcell_background: rgb(255, 255, 255);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: rgb(235, 235, 235);
+  color: rgb(0, 0, 0);
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.picHeader {
+  background-color: rgb(43, 106, 143);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 5px;
+  margin: 8px 8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.picHeader::before {
+  content: "";
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background-image: url("./aqualinkd-white.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.picHeader .picController.control-panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.control-panel,
+.popover {
+  vertical-align: top;
+  display: inline-block;
+  margin: 0.4rem 0.2rem;
+  padding: 0.6em;
+  border: 1px solid rgb(124, 124, 124);
+  border-radius: 20px;
+  background-color: rgb(245, 245, 245);
+  box-shadow: none;
+}
+
+.control-panel-title {
+  font-weight: 700;
+  color: rgb(43, 106, 143);
+  border-bottom: 2px solid rgb(4, 159, 248);
+  white-space: nowrap;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.picTile {
+  background-color: rgb(220, 220, 220);
+  color: rgb(110, 110, 110);
+  border-radius: 10px;
+  padding: 5px;
+  width: 100px;
+  height: 100px;
+  opacity: 0.9;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.picTile.is-on {
+  background-color: #fff;
+  color: #000;
+  opacity: 1;
+}
+
+.picTile.is-flash {
+  animation: aqualinkd-tile-flash 2s infinite;
+}
+
+@keyframes aqualinkd-tile-flash {
+  0%, 100% {
+    background-color: #fff;
+    opacity: 1;
+  }
+  50% {
+    background-color: rgb(220, 220, 220);
+    opacity: 0.9;
+  }
+}
+.picTile .picTileIcon {
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.picTile .picTileName {
+  height: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.picTile .picTileStatus {
+  color: rgb(87, 87, 87);
+  height: 15px;
+  font-size: 12px;
+}
+
+.picTileValue {
+  background-color: rgb(4, 159, 248);
+  color: #fff;
+  border-radius: calc(35px / 2);
+  height: 35px;
+  min-width: 35px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 35px;
+  font-weight: 600;
+  padding: 0 8px;
+  display: inline-block;
+}
+.picTileValue.is-heat {
+  background-color: rgb(255, 123, 0);
+}
+.picTileValue.is-cool {
+  background-color: rgb(4, 159, 248);
+}
+.picTileValue.is-enabled {
+  background-color: rgb(78, 196, 0);
+}
+.picTileValue.is-disabled {
+  background-color: rgb(110, 110, 110);
+  color: rgb(220, 220, 220);
+}
+.picTileValue.is-attention {
+  background-color: rgb(255, 160, 0);
+}
+.picTileValue.is-outofrange {
+  background-color: rgb(255, 100, 0);
+}
+
+.options-pane,
+.options_pane {
+  background-color: rgb(245, 245, 245);
+  border: 2px solid rgb(124, 124, 124);
+  border-radius: 20px;
+  padding: 14px;
+  width: 345px;
+}
+
+.options-title {
+  font-size: 18px;
+  font-weight: 700;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.option-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.option-switch input {
+  display: none;
+}
+
+.option-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: rgb(211, 211, 211);
+  transition: 0.2s;
+  border-radius: 34px;
+}
+
+.option-switch .slider::before {
+  position: absolute;
+  content: "";
+  height: calc(30 * 1px);
+  width: calc(30 * 1px);
+  left: 2px;
+  bottom: 2px;
+  background-color: #fff;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.option-switch input:checked + .slider {
+  background-color: #2196F3;
+}
+
+.option-switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+.option-slider {
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: rgb(211, 211, 211);
+  outline: none;
+  border-radius: 20px;
+}
+
+.option-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(30 * 1px);
+  height: calc(30 * 1px);
+  background: #2196F3;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.option-slider::-moz-range-thumb {
+  width: calc(30 * 1px);
+  height: calc(30 * 1px);
+  background: #2196F3;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.option-radio-container {
+  padding: 0.2em 0;
+}
+
+.option-radio-value {
+  background-color: rgb(211, 211, 211);
+  border-radius: 50%;
+  display: inline-block;
+  height: calc(20px * 1px);
+  width: calc(20px * 1px);
+  margin-right: 0.4em;
+  vertical-align: -0.3em;
+}
+
+.option-radio-container input:checked + .option-radio-value {
+  background-color: #2196F3;
+}
+
+input[type=text],
+input[type=number],
+select,
+textarea {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-size: 14px;
+  background-color: rgb(255, 255, 255);
+  border: 1px solid rgb(124, 124, 124);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgb(43, 106, 143) 50%), linear-gradient(135deg, rgb(43, 106, 143) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 26px;
+}
+
+button,
+input[type=submit],
+input[type=button],
+input[type=reset] {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  background-color: rgb(220, 220, 220);
+  color: rgb(110, 110, 110);
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 28px;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+button:hover,
+input[type=submit]:hover,
+input[type=button]:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+button.is-primary,
+input[type=submit].is-primary {
+  background-color: rgb(43, 106, 143);
+  color: #fff;
+}
+
+button.is-primary:hover,
+input[type=submit].is-primary:hover {
+  background-color: rgb(13.1638203669%, 32.4503478811%, 43.7773561037%);
+}
+
+table {
+  background-color: rgb(245, 245, 245);
+  border-collapse: collapse;
+}
+
+th {
+  padding: 6px 8px;
+  text-align: left;
+  background-color: rgb(220, 220, 220);
+}
+
+td {
+  padding: 6px 8px;
+}
+
+a {
+  color: #2196F3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.is-error {
+  background-color: rgb(143, 43, 43) !important;
+  color: #fff !important;
+}
+
+.is-warn {
+  color: rgb(255, 160, 0);
+}
+
+.is-ok {
+  color: rgb(78, 196, 0);
+}
+
+.dashOuter {
+  padding: 4px;
+}
+
+.dashContainer,
+.control-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  padding: 4px;
+}
+
+.dashContainer,
+.control-container {
+  grid-template-columns: 1fr;
+  gap: calc(10px * 0.75);
+  padding: 2px;
+}
+
+.picTile {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.picHeader {
+  flex-wrap: wrap;
+  padding: 8px 10px;
+}
+
+@media (min-width: 640px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 768px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .picTile {
+    max-width: none;
+  }
+}
+@media (min-width: 1024px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .picHeader::before {
+    width: 22px;
+    height: 22px;
+  }
+  .picHeader {
+    gap: 8px;
+    font-size: 13px;
+  }
+}
+.picThemeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 50%;
+  cursor: pointer;
+  user-select: none;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.08);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.picThemeToggle:hover,
+.picThemeToggle:focus {
+  background-color: rgba(255, 255, 255, 0.18);
+  outline: none;
+  transform: scale(1.05);
+}
+
+.picThemeToggle:active {
+  transform: scale(0.95);
+}
+
+.picThemeToggle i {
+  font-size: 14px;
+  pointer-events: none;
+}
+
+@media (max-width: 540px) {
+  .picThemeToggle {
+    width: 28px;
+    height: 28px;
+  }
+  .picThemeToggle i {
+    font-size: 12px;
+  }
+}
+.picConfigTabContents {
+  background-color: rgb(245, 245, 245);
+}
+
+.picTab {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  border: 1px solid rgb(124, 124, 124);
+  background-color: rgb(220, 220, 220);
+  color: rgb(110, 110, 110);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.picTab.picTabSelected {
+  background-color: rgb(43, 106, 143);
+  color: #fff;
+  font-weight: 700;
+}
+
+.field-text,
+.fld-value {
+  border: 1px solid rgb(124, 124, 124);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background-color: rgb(255, 255, 255);
+}
+
+.picAccordian-title {
+  border: 1px solid rgb(124, 124, 124);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  background-color: rgb(220, 220, 220);
+  padding: 6px 10px;
+}
+
+.cs_deletebutton,
+.cs_commandcell,
+.cs_devicecell,
+.cs_inputcell {
+  background-color: rgb(255, 255, 255);
+  border: 1px solid rgb(124, 124, 124);
+  padding: 4px;
+}
+
+.cs_helpleft,
+.cs_helpright {
+  background-color: rgb(220, 220, 220);
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.picPumpOn {
+  color: rgb(78, 196, 0);
+}
+
+.picPumpOff {
+  color: rgb(110, 110, 110);
+}
+
+.picPumpRPM {
+  color: rgb(43, 106, 143);
+}
+
+div.pover-icon:hover {
+  color: rgb(4, 159, 248);
+}
+
+.picIntelliBriteIcon {
+  color: rgb(4, 159, 248);
+}
+
+.picBody[data-ison=false] .picBodyTemp {
+  color: rgb(87, 87, 87);
+}
+
+.picUnits {
+  color: rgb(87, 87, 87);
+  font-size: 75%;
+}
+
+body {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-size: 14px;
+  background-color: rgb(235, 235, 235);
+  color: rgb(0, 0, 0);
+}

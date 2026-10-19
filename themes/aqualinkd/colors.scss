@@ -1,0 +1,59 @@
+// colors.scss — AqualinkD design language
+// Models the CSS custom properties from AqualinkD's controller.html.
+// Light, clean, tile-based; no gradients; pure flat color.
+
+@import '../mixins/gradients.scss';
+
+$border_radius: 10px;
+$panel_border_radius: 20px;
+$outline_border: solid 1px rgb(124, 124, 124);
+
+$body_background: rgb(235, 235, 235);
+$body_text: rgb(0, 0, 0);
+
+$header_background: rgb(43, 106, 143);
+$header_text: #fff;
+
+$panel_background: rgb(245, 245, 245);
+$panel_border_color: rgb(124, 124, 124);
+
+$tile_background: rgb(220, 220, 220);
+$tile_text: rgb(110, 110, 110);
+$tile_on_background: #fff;
+$tile_on_text: #000;
+$tile_status_text: rgb(87, 87, 87);
+
+$value_normal: rgb(4, 159, 248);   // #049FF8
+$value_attention: rgb(255, 160, 0);
+$value_outofrange: rgb(255, 100, 0);
+
+$heat_color: rgb(255, 123, 0);
+$cool_color: rgb(4, 159, 248);
+$enabled_color: rgb(78, 196, 0);
+$disabled_bg: rgb(110, 110, 110);
+$disabled_fg: rgb(220, 220, 220);
+
+$error_background: rgb(143, 43, 43);
+$slider_highlight: #2196F3;
+$slider_lowlight: rgb(211, 211, 211);
+$slider_height: 20px;
+$slider_ball: 30;
+$radio_highlight: #2196F3;
+$radio_lowlight: rgb(211, 211, 211);
+$radio_ball: 20px;
+
+$input_background: rgb(255, 255, 255);
+
+$font_family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif;
+$font_weight: 600;
+$font_size_base: 14px;
+
+$fonts: $font_family;
+$tile_width: 100px;
+$tile_icon_height: 35px;
+$tile_name_height: 32px;
+$tile_name_height1line: 17px;
+$tile_status_height: 15px;
+$tile_grid_gap: 10px;
+$tile_name_lineheight: 1.2;
+$tile_name_charlimit: 12;

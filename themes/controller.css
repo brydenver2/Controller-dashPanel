@@ -1,4 +1,4 @@
-﻿span.picPercentData {
+span.picPercentData {
   padding-left: 2px;
   padding-right: 2px;
 }
@@ -27,6 +27,11 @@ div.picFreezeProtect {
   color: blue;
 }
 
+div.picVacationMode {
+  text-align: center;
+  color: #ff8c00;
+}
+
 div.picSpaDrain {
   text-align: center;
   color: black;
@@ -35,6 +40,7 @@ div.picSpaDrain {
 div.picPanelMode[data-status=""],
 div.picPanelMode[data-status=auto],
 div.picFreezeProtect[data-status=off],
+div.picVacationMode[data-status=off],
 div.picSpaDrain[data-status=off] {
   display: none;
 }
@@ -49,9 +55,16 @@ div.picModel > i:hover {
   padding-right: 0.2rem;
   color: orange;
 }
+div.picModel > i:focus-visible,
+div.picConfigIcon:focus-visible,
+div.picLockIcon:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
 
 div.picPanelMode > label,
 div.picFreezeProtect > label,
+div.picVacationMode > label,
 div.picSpaDrain > label {
   font-weight: bold;
   color: red;
@@ -170,6 +183,24 @@ div.picConfigIcon:hover, div.picStartLogs:hover {
   text-shadow: 3px 3px 16px #272634;
 }
 
+div.picLockIcon {
+  display: none;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  vertical-align: text-top;
+  color: inherit;
+}
+
+div.picLockIcon:hover {
+  color: inherit;
+  text-shadow: none;
+}
+
+.picAdminLocked {
+  color: #9a9a9a !important;
+  text-shadow: none !important;
+}
+
 div.picOptionField > label {
   display: inline-block;
   text-overflow: ellipsis;
@@ -217,6 +248,81 @@ div.anslq25-ct-narrative {
 div.anslq25-ct-narrative-warning {
   font: bold;
   color: red;
+}
+
+/* Virtual Equipment (Controller sub-tab) */
+div.cfgVirtualEquipment {
+  max-width: 42rem;
+}
+
+div.virtualEquipment-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+}
+
+div.virtualEquipment-narrative {
+  font-size: 0.85em;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+div.virtualEquipment-form {
+  padding: 0.25rem 0;
+}
+
+div.virtualEquipment-runtime {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #ccc;
+}
+
+div.virtualEquipment-hint {
+  font-style: italic;
+  color: #888;
+  font-size: 0.85em;
+}
+
+div.virtualEquipment-runtime-grid {
+  display: block;
+  padding: 0.25rem 0;
+}
+
+div.virtualEquipment-runtime-row {
+  display: flex;
+  justify-content: flex-start;
+  font-size: 0.85em;
+  padding: 0.1rem 0;
+}
+
+span.virtualEquipment-runtime-label {
+  display: inline-block;
+  width: 10rem;
+  color: #555;
+}
+
+span.virtualEquipment-runtime-value {
+  font-weight: 600;
+}
+
+div.virtualEquipment-conflict-banner {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+}
+
+div.virtualEquipment-timestamp {
+  font-size: 0.75em;
+  color: #555;
+  margin-top: 0.15rem;
 }
 
 div.sysmessage-button {

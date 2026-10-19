@@ -1,15 +1,36 @@
 ﻿# nodejs-poolController-dashPanel
+
 ## What is nodejs-poolController-dashPanel?
 dashPanel is a controller designed to operate using a [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) server backend.  You will need to set up your nodejs-poolController server and have it communicating with your pool equipment prior to setting up this server.  Once you have done that you can set up the dashPanel to communicate with that server.
 
-While this project was originally developed using an IntelliCenter control panel it should operate equally well with an IntelliTouch or EasyTouch control panel.
+While this project was originally developed using an IntelliCenter control panel it should operate equally well with an IntelliTouch or EasyTouch control panel. IntelliCenter v3 users can also connect directly via local WebSocket (no RS-485 adapter required).
+
 ![image](https://user-images.githubusercontent.com/47839015/83304160-38a86780-a1b3-11ea-8214-442db6c6bdc4.png)
+
+## Requirements
+- Node.js >= 20.0.0
+- npm >= 8.0.0
+- A running [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) v9+ backend
 
 ## Configuring the dashPanel
 To configure the dashPanel you need to place the url for your [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) server in the configuration.  Click the bars menu on the top left of the screen and fill in the ip address and port.  Then press the Apply button.  If this button is grayed out you will need to edit the config.json file manually and enter the settings under the services menu.
 
+### IntelliCenter v3 WebSocket Connection
+For IntelliCenter v3 (firmware 3.004+), dashPanel supports a direct local WebSocket connection to the OCP on port 6680. This eliminates the need for an RS-485 adapter. In the configuration panel, select "IntelliCenter Network" as the port type, then use the Discover button to auto-detect your OCP via mDNS, or enter the host/port manually.
+
+## Themes
+The dashboard ships with several themes selectable from **Settings → Appearance → Theme**:
+
+* `aqualinkd` — **Modern (AqualinkD)**. Tile-based, flat color, rounded tiles, light theme matching the AqualinkD web UI styling. Uses CSS custom properties so end users can theme further via `config.js`.
+* `default`, `sketchy`, `materia`, `purple`, `nurple`, `bootstrap` — the legacy themes.
+
+No external font or image asset is required for the `aqualinkd` theme — Helvetica Neue / system fallbacks only. The three AqualinkD brand logos are bundled in `themes/aqualinkd/` (`aqualinkd-new.png`, `aqualinkd-white.png`, `aqualinkd.png`) and used as CSS background-image decorations in the header. They are static SVGs converted to PNGs from the AqualinkD source.
+
 ## What is Message Manager?
 Message manager allows you to inspect your RS485 communication coming from and going to the [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) server.  This tool decodes the messages and displays them in a manner where important chatter on the RS485 connection can be decoded while eliminating the chatter that don't matter.  Special filters can be applied to reduce the information to only the items you are interested in.
+
+The **Entity Flow Analyzer** extends Message Manager with entity-centric packet analysis, flow timelines (flame graph), and state extraction for debugging protocol interactions.
+
 ![image](https://user-images.githubusercontent.com/47839015/83314254-7a92d700-a1ce-11ea-8891-545db084624e.png)
 
 ## Quick Start (docker-compose)
@@ -18,7 +39,7 @@ Below is a minimal example running both the backend `nodejs-poolController` (ser
 ```yaml
 services:
    njspc:
-      image: ghcr.io/sam2kb/njspc
+      image: ghcr.io/tagyoureit/njspc
       container_name: njspc
       restart: unless-stopped
       environment:
@@ -48,7 +69,7 @@ services:
       # user: "0:0"
 
    njspc-dash:
-     image: ghcr.io/sam2kb/njspc-dash
+     image: ghcr.io/rstrouse/njspc-dash
      container_name: njspc-dash
      restart: unless-stopped
      depends_on:
@@ -83,7 +104,7 @@ The application loads configuration from `/app/config.json` at startup and rewri
 1. Create a host directory and seed the file (optional – if omitted, an empty file will be populated after first change):
   ```bash
   mkdir -p config
-  docker run --rm ghcr.io/sam2kb/njspc-dash cat /app/config.json > config/config.json
+  docker run --rm ghcr.io/rstrouse/njspc-dash cat /app/config.json > config/config.json
   ```
 2. Use the bind mount shown in the compose example: `./config/config.json:/app/config.json`.
 3. If the mounted file is empty, defaults + environment overrides are applied and the file will be written once you change settings via the UI/API.
@@ -101,4 +122,5 @@ Legacy variables `POOL_HTTP_IP` and `POOL_HTTP_PORT` are still honored.
 
 For production hardenings consider: enabling HTTPS, adding reverse proxy headers, mounting persistent volumes, and restricting exposed ports. Ensure ownership of the mounted `config.json` permits writes by the container user (UID 1000 in the official image); otherwise configuration changes will be disabled.
 
-
+## Remote access
+As configured in Quick Start above, the dashboard is only suitable to be used on your local network.  To secure the website for accessing remotely on the internet you will need to use a [reverse proxy](https://en.wikipedia.org/wiki/Reverse_proxy) that is configured to use encryption and authentication.  There are several reverse proxies available, including [Nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) and [Caddy](https://caddyserver.com/docs/quick-starts/reverse-proxy).  An example setup with [YARP](https://dotnet.github.io/yarp/) is documented in the wiki under [Secure remote access](https://github.com/rstrouse/nodejs-poolController-dashPanel/wiki/Secure-remote-access).

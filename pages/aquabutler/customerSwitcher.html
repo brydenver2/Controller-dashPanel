@@ -1,0 +1,29 @@
+<!--
+  AquaButler customer switcher top-bar fragment.
+
+  Mounted into the existing pages/index.html (or any other AquaButler-
+  facing page) by adding `<div id="aquabutler-customer-host"></div>` and
+  including `scripts/aquabutler/customerSwitcher.js`. The widget reads
+  from /aquabutler/customers and writes to /aquabutler/active-customer;
+  both endpoints are mounted by `server/aquabutler/api.ts` at boot.
+
+  Layer 3 (per kanban t_1e9f6f85) renders the AquaButler sub-mark
+  placeholder at the left of the host element so the brand identity
+  reads on every page that mounts this fragment. The placeholder is
+  `aquabutler-submark-placeholder-2026-10-18.jpg` (SHA da3f913e…) on
+  `ultron-aquabutler/AquaButler-Hardware:main:brand/`, copied to
+  `themes/aquabutler/assets/` so the relative path is stable.
+-->
+<div id="aquabutler-customer-host" class="aquabutler-host">
+  <span class="aqb-brand" aria-label="AquaButler Automation">
+    <img src="themes/aquabutler/assets/aquabutler-submark-placeholder-2026-10-18.jpg" alt="AquaButler" />
+    <span>AquaButler<span class="aqb-brand-sub">Automation</span></span>
+  </span>
+</div>
+<style>
+  /* The switcher dropdown + connection pill are styled in
+   * themes/aquabutler/widgets.css so every page that mounts the
+   * fragment picks up the AquaButler palette. Keep this block empty
+   * intentionally — anything customer-switcher-specific goes in the
+   * shared widgets.css. */
+</style>

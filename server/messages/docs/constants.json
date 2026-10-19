@@ -1,4 +1,4 @@
-﻿{
+{
   "protocols": [
     {
       "name": "broadcast",
@@ -185,19 +185,49 @@
             "defaultType": "Request"
           },
           {
+            "val": 179,
+            "desc": "Heartbeat Request (v3.004+)",
+            "defaultType": "Request"
+          },
+          {
+            "val": 180,
+            "desc": "Heartbeat Response (v3.004+)",
+            "defaultType": "Response"
+          },
+          {
+            "val": 184,
+            "desc": "Circuit Control - Indexed (v3.004+)",
+            "defaultType": "Request"
+          },
+          {
+            "val": 217,
+            "desc": "Device List Broadcast (v3.004+)",
+            "defaultType": "Broadcast"
+          },
+          {
             "val": 222,
             "desc": "Request Config Item",
             "defaultType": "Request"
           },
           {
-            "val": 222,
+            "val": 228,
             "desc": "Request Config Versions",
             "defaultType": "Request"
           },
           {
             "val": 204,
-            "desc": "Comms Status",
+            "desc": "Extended Status (feature states STALE on v3.004+)",
             "defaultType": "Broadcast"
+          },
+          {
+            "val": 251,
+            "desc": "Device Announcement/Registration (v3.004+)",
+            "defaultType": "Request"
+          },
+          {
+            "val": 253,
+            "desc": "Registration Confirmation (v3.004+)",
+            "defaultType": "Response"
           }
         ]
       },
@@ -834,6 +864,43 @@
       "controller": false,
       "length": false,
       "keyFormat": "<address>_<function>_<ack>_<data>_<crclo>_<crchi>"
+    },
+    {
+      "name": "neptunemodbus",
+      "desc": "Neptune Modbus",
+      "actions": {
+        "all": []
+      },
+      "source": false,
+      "controller": false,
+      "length": false,
+      "keyFormat": "<address>_<function>_<data>_<crclo>_<crchi>"
+    },
+    {
+      "name": "jandy",
+      "desc": "Jandy Heater",
+      "actions": {
+        "all": [
+          {
+            "val": 12,
+            "desc": "Set Heat Command",
+            "defaultType": "Request"
+          },
+          {
+            "val": 13,
+            "desc": "Status Response",
+            "defaultType": "Response"
+          },
+          {
+            "val": 37,
+            "desc": "Temperature Response",
+            "defaultType": "Response"
+          }
+        ]
+      },
+      "source": false,
+      "controller": false,
+      "keyFormat": "10_2_<dest>_<action>"
     }
   ],
   "controllers": [
@@ -958,15 +1025,15 @@
     },
     {
       "val": 32,
-      "desc": "Indoor Control Panel",
-      "name": "ICP",
+      "desc": "Indoor Control Panel 1 (may be njsPC when it has converged onto this slot)",
+      "name": "ICP1",
       "protocol": "!chlorinator,!aqualink,any",
       "key": "CP"
     },
     {
       "val": 33,
-      "name": "Plugin",
-      "desc": "Default plugin address",
+      "name": "ICP2",
+      "desc": "Indoor Control Panel 2 (default njsPC plugin address)",
       "protocol": "!chlorinator,!aqualink,any",
       "key": "CP"
     },
@@ -983,6 +1050,41 @@
       "desc": "ScreenLogic2",
       "protocol": "!chlorinator,!aqualink,any",
       "key": "CP"
+    },
+    {
+      "val": 36,
+      "name": "WL",
+      "desc": "IntelliCenter Wireless",
+      "protocol": "!chlorinator,!aqualink,any",
+      "key": "CP"
+    },
+    {
+      "val": 56,
+      "name": "LXi[1]",
+      "desc": "LXi Heater #1",
+      "protocol": "jandy",
+      "key": "LXi"
+    },
+    {
+      "val": 57,
+      "name": "LXi[2]",
+      "desc": "LXi Heater #2",
+      "protocol": "jandy",
+      "key": "LXi"
+    },
+    {
+      "val": 58,
+      "name": "LXi[3]",
+      "desc": "LXi Heater #3",
+      "protocol": "jandy",
+      "key": "LXi"
+    },
+    {
+      "val": 59,
+      "name": "LXi[4]",
+      "desc": "LXi Heater #4",
+      "protocol": "jandy",
+      "key": "LXi"
     },
     {
       "val": 80,
@@ -1067,6 +1169,34 @@
       "desc": "Pump #8",
       "protocol": "pump",
       "key": "PMP"
+    },
+    {
+      "val": 104,
+      "name": "JXi[1]",
+      "desc": "JXi Heater #1",
+      "protocol": "jandy",
+      "key": "JXi"
+    },
+    {
+      "val": 105,
+      "name": "JXi[2]",
+      "desc": "JXi Heater #2",
+      "protocol": "jandy",
+      "key": "JXi"
+    },
+    {
+      "val": 106,
+      "name": "JXi[3]",
+      "desc": "JXi Heater #3",
+      "protocol": "jandy",
+      "key": "JXi"
+    },
+    {
+      "val": 107,
+      "name": "JXi[4]",
+      "desc": "JXi Heater #4",
+      "protocol": "jandy",
+      "key": "JXi"
     },
     {
       "val": 104,

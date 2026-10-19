@@ -346,7 +346,29 @@
                 var line = $('<div></div>').appendTo(el);
                 console.log(type);
                 $('<input type="hidden" data-bind="controllerType"></input>').appendTo(line).val(opts.controllerType);
-                $('<div></div>').staticField({ labelText: `Panel Type`, value: type.name }).appendTo(line);
+                if (type.canChange) {
+                    // Show a controller type dropdown when switching is allowed (Nixie/AquaLink)
+                    var changeableTypes = opts.controllerTypes.filter(elem => elem.canChange);
+                    $('<div></div>').pickList({
+                        required: true, value: type.type,
+                        bindColumn: 0, displayColumn: 1, labelText: 'Controller Type', binding: 'controllerType',
+                        columns: [{ binding: 'type', text: 'Type', hidden: true, style: { whiteSpace: 'nowrap' } }, { binding: 'name', hidden: false, text: 'Name', style: { whiteSpace: 'nowrap' } }],
+                        items: changeableTypes, inputAttrs: { style: { width: '9.7rem' } }
+                    }).appendTo(line).on('selchanged', function (evt) {
+                        // When controller type changes, update the model picklist
+                        var newType = opts.controllerTypes.find(elem => elem.type === evt.newItem.type);
+                        var modelPnl = el.find('[data-bind="model"]').closest('.picPickList');
+                        if (newType && newType.models && newType.models.length > 0) {
+                            modelPnl.each(function() { this.items(newType.models); });
+                            modelPnl.show();
+                        } else {
+                            modelPnl.hide();
+                        }
+                        el.find('input[data-bind="controllerType"]').val(evt.newItem.type);
+                    });
+                } else {
+                    $('<div></div>').staticField({ labelText: `Panel Type`, value: type.name }).appendTo(line);
+                }
                 $('<div></div>').pickList({
                     required: true, value: opts.equipment.modules[0].type,
                     bindColumn: 0, displayColumn: 2, labelText: 'Model', binding: 'model',
@@ -356,6 +378,10 @@
                     self._setModelAttributes(evt.newItem);
 
                 })[0].disabled(!makeBool(type.canChange));
+                // Hide model dropdown when models are not applicable (e.g. AquaLink)
+                if (!type.models || type.models.length === 0) {
+                    el.find('[data-bind="model"]').closest('.picPickList').hide();
+                }
                 $('<div></div>').appendTo(el).addClass('ct-narrative');
                 self._setModelAttributes(model);
                 if (typeof opts.equipment.expansions !== 'undefined' && opts.equipment.expansions.length > 0 && type.type === 'intellitouch') {
@@ -481,7 +507,7 @@
             var binding = '';
             $('<span></span>').addClass('mockCheck').checkbox({ labelText: 'Mock Port', binding: binding + 'mock' }).css({ display: 'none' }).appendTo(line);
             $('<div></div>').appendTo(line).checkbox({ labelText: 'Enabled', binding: binding + 'enabled' });
-            let portTypes = [{ val: 'local', name: 'Local', desc: 'Local RS485 comm port' }, { val: 'netConnect', name: 'Network', desc: 'Network RS485 Port (SOCAT ...etc)' }, { val: 'screenlogic', name: 'ScreenLogic', desc: 'ScreenLogic TCP Connection' }, { val: 'mock', name: 'Mock Port', desc: 'Fake port and mock responses' }]
+            let portTypes = [{ val: 'local', name: 'Local', desc: 'Local RS485 comm port' }, { val: 'netConnect', name: 'Network', desc: 'Network RS485 Port (SOCAT ...etc)' }, { val: 'screenlogic', name: 'ScreenLogic', desc: 'ScreenLogic TCP Connection' }, { val: 'ocpws', name: 'IntelliCenter Network', desc: 'Local WebSocket to IntelliCenter v3 OCP (port 6680)' }, { val: 'mock', name: 'Mock Port', desc: 'Fake port and mock responses' }]
             $('<div></div>').appendTo(line).pickList({
                 required: true,
                 bindColumn: 0, displayColumn: 1, labelText: 'Port Type', binding: binding + 'type',
@@ -499,6 +525,7 @@
                             pnl.find('div.pnl-rs485-mock').hide();
                             pnl.find('div.pnl-rs485-inactivity').show();
                             pnl.find('div.pnl-screenlogic').hide();
+                            pnl.find('div.pnl-ocpws').hide();
                             pnl.find('div.pnl-rs485Stats').show();
                             break;
                         case 'mock':
@@ -507,6 +534,7 @@
                             pnl.find('div.pnl-rs485-mock').show();
                             pnl.find('div.pnl-rs485-inactivity').hide();
                             pnl.find('div.pnl-screenlogic').hide();
+                            pnl.find('div.pnl-ocpws').hide();
                             pnl.find('div.pnl-rs485Stats').show();
                             break;
                         case 'screenlogic':
@@ -515,6 +543,16 @@
                             pnl.find('div.pnl-rs485-mock').hide();
                             pnl.find('div.pnl-rs485-inactivity').hide();
                             pnl.find('div.pnl-screenlogic').show();
+                            pnl.find('div.pnl-ocpws').hide();
+                            pnl.find('div.pnl-rs485Stats').hide();
+                            break;
+                        case 'ocpws':
+                            pnl.find('div.pnl-rs485-network').hide();
+                            pnl.find('div.pnl-rs485-local').hide();
+                            pnl.find('div.pnl-rs485-mock').hide();
+                            pnl.find('div.pnl-rs485-inactivity').hide();
+                            pnl.find('div.pnl-screenlogic').hide();
+                            pnl.find('div.pnl-ocpws').show();
                             pnl.find('div.pnl-rs485Stats').hide();
                             break;
                         case 'local':
@@ -524,6 +562,7 @@
                             pnl.find('div.pnl-rs485-mock').hide();
                             pnl.find('div.pnl-rs485-inactivity').show();
                             pnl.find('div.pnl-screenlogic').hide();
+                            pnl.find('div.pnl-ocpws').hide();
                             pnl.find('div.pnl-rs485Stats').show();
                             break;
                     }
@@ -534,6 +573,7 @@
                     pnl.find('div.pnl-rs485-mock').hide();
                     pnl.find('div.pnl-rs485-inactivity').hide();
                     pnl.find('div.pnl-screenlogic').hide();
+                    pnl.find('div.pnl-ocpws').hide();
                     pnl.find('div.pnl-rs485Stats').hide();
                 }
             });
@@ -599,6 +639,70 @@
             line = $('<div></div>').appendTo(divSL);
 
 
+            // IntelliCenter v3 local WebSocket panel (mutually exclusive with RS-485 / ScreenLogic).
+            var divOCPWS = $('<div></div>').addClass('pnl-ocpws').appendTo(divSettings).hide();
+            line = $('<div></div>').appendTo(divOCPWS);
+            $('<div></div>').appendTo(line).pickList({
+                canEdit: true,
+                bindColumn: 0, displayColumn: 0, labelText: 'Discovered',
+                binding: 'ocpws.alias',
+                columns: [
+                    { binding: 'alias', text: 'Alias', style: { whiteSpace: 'nowrap', minWidth: '10rem' } },
+                    { binding: 'host', text: 'Host', style: { whiteSpace: 'nowrap', minWidth: '12rem' } },
+                    { binding: 'port', text: 'Port', style: { whiteSpace: 'nowrap', minWidth: '5rem' } }
+                ],
+                items: [], inputAttrs: { style: { width: '12rem' } }, labelAttrs: { style: { marginRight: '.25rem', textAlign: 'right', padding: '0px' } }
+            }).addClass('pickOcpwsAlias').on('selchanged', function (evt) {
+                if (typeof evt.newItem !== 'undefined') {
+                    var hostInp = el.find('div[data-bind$=ocpws\\.host]:first');
+                    var portInp = el.find('div[data-bind$=ocpws\\.port]:first');
+                    if (hostInp[0] && typeof hostInp[0].val === 'function') hostInp[0].val(evt.newItem.host || '');
+                    if (portInp[0] && typeof portInp[0].val === 'function') portInp[0].val(evt.newItem.port || 6680);
+                }
+            });
+            line = $('<div></div>').appendTo(divOCPWS).css({ display: 'flex', alignItems: 'center' });
+            $('<div></div>').appendTo(line).inputField({ labelText: 'Host', binding: 'ocpws.host', inputAttrs: { maxlength: 64, style: { width: '11rem' } }, labelAttrs: { style: { width: '5rem' } } });
+            $('<div></div>').appendTo(line).inputField({ labelText: ':', binding: 'ocpws.port', dataType: 'number', fmtMask: '#', inputAttrs: { maxlength: 6, style: { width: '4rem' } }, labelAttrs: { style: { marginLeft: '.25rem', width: 'auto' } } });
+            line = $('<div></div>').appendTo(divOCPWS);
+            $('<div></div>').appendTo(line).valueSpinner({ canEdit: true, labelText: 'Reconnect', fmtMask: "#,##0", binding: 'ocpws.reconnectMs', min: 1000, max: 60000, step: 500, units: 'ms', inputAttrs: { maxlength: 6 }, labelAttrs: { style: { width: '8.3rem', marginRight: '.25rem' } } });
+            line = $('<div></div>').appendTo(divOCPWS);
+            $('<div></div>').appendTo(line).valueSpinner({ canEdit: true, labelText: 'Msg Timeout', fmtMask: "#,##0", binding: 'ocpws.messageTimeoutMs', min: 1000, max: 60000, step: 500, units: 'ms', inputAttrs: { maxlength: 6 }, labelAttrs: { style: { width: '8.3rem', marginRight: '.25rem' } } });
+            line = $('<div></div>').appendTo(divOCPWS).css({ marginTop: '.5rem' });
+            var btnDisc = $('<div></div>').appendTo(line).actionButton({ text: 'Discover', icon: '<i class="fas fa-search"></i>' });
+            var btnTest = $('<div></div>').appendTo(line).actionButton({ text: 'Test', icon: '<i class="fas fa-plug"></i>' }).css({ marginLeft: '.5rem' });
+            var lblOcpwsStatus = $('<span></span>').appendTo(line).addClass('pnl-ocpws-status').css({ marginLeft: '1rem', fontSize: '.85rem', fontStyle: 'italic' });
+            btnDisc.on('click', function () {
+                lblOcpwsStatus.text('Searching mDNS for IntelliCenter OCP...');
+                $.getApiService('/config/options/ocpws/search', null, 'Discovering IntelliCenter on the network...', function (units) {
+                    var pick = el.find('.pickOcpwsAlias');
+                    var list = units || [];
+                    if (pick[0] && typeof pick[0].items === 'function') pick[0].items(list);
+                    lblOcpwsStatus.text(list.length ? (list.length + ' found') : 'No IntelliCenter OCP advertised on the LAN');
+                    // If exactly one result, auto-select and copy host/port into the form.
+                    if (list.length === 1) {
+                        var item = list[0];
+                        if (pick[0] && typeof pick[0].val === 'function') pick[0].val(item.alias);
+                        var hostInp = el.find('div[data-bind$=ocpws\\.host]:first');
+                        var portInp = el.find('div[data-bind$=ocpws\\.port]:first');
+                        if (hostInp[0] && typeof hostInp[0].val === 'function') hostInp[0].val(item.host || '');
+                        if (portInp[0] && typeof portInp[0].val === 'function') portInp[0].val(item.port || 6680);
+                    }
+                });
+            });
+            btnTest.on('click', function () {
+                var p = dataBinder.fromElement(divSettings);
+                var host = (p.ocpws && p.ocpws.host) || '';
+                var port = (p.ocpws && p.ocpws.port) || 6680;
+                if (!host) { lblOcpwsStatus.text('Enter a host or run Discover first.'); return; }
+                lblOcpwsStatus.text('Testing ' + host + ':' + port + ' ...');
+                var url = '/config/options/ocpws/test?host=' + encodeURIComponent(host) + '&port=' + encodeURIComponent(port);
+                $.getApiService(url, null, 'Testing IntelliCenter WS...', function (r) {
+                    if (r && r.ok) lblOcpwsStatus.text('Reachable. Firmware: ' + (r.ver || 'unknown'));
+                    else lblOcpwsStatus.text('Failed: ' + ((r && r.error) || 'no response'));
+                });
+            });
+
+
             // Create the statistics panel.
             $('<div></div>').appendTo(divStatus).css({ fontSize: '.8rem' }).configRS485PortStats();
             var btnPnl = $('<div class="picBtnPanel btn-panel"></div>').appendTo(pnl);
@@ -631,11 +735,30 @@
                         password: p.screenlogic.password,
                     }
                 }
+                if (p.type === 'ocpws') {
+                    obj.ocpws = {
+                        host: (p.ocpws && p.ocpws.host) || '',
+                        port: (p.ocpws && p.ocpws.port) || 6680,
+                        alias: (p.ocpws && p.ocpws.alias) || '',
+                        reconnectMs: (p.ocpws && p.ocpws.reconnectMs) || 5000,
+                        messageTimeoutMs: (p.ocpws && p.ocpws.messageTimeoutMs) || 10000,
+                    }
+                }
                 var bValid = true;
                 if (p.enabled) {
-                    if (obj.rs485Port.trim() === '') {
+                    if (p.type !== 'ocpws' && p.type !== 'screenlogic' && obj.rs485Port.trim() === '') {
                         $('<div></div>').appendTo(el.find('div[data-bind$=rs485Port]:first')).fieldTip({ message: 'You must supply the port name' });
                         bValid = false;
+                    }
+                    if (p.type === 'ocpws') {
+                        if (!obj.ocpws || !obj.ocpws.host || obj.ocpws.host.trim() === '') {
+                            $('<div></div>').appendTo(el.find('div[data-bind$=ocpws.host]:first')).fieldTip({ message: 'IntelliCenter WS host is required' });
+                            bValid = false;
+                        }
+                        if (!obj.ocpws || isNaN(obj.ocpws.port) || obj.ocpws.port < 1 || obj.ocpws.port > 65535) {
+                            $('<div></div>').appendTo(el.find('div[data-bind$=ocpws.port]:first')).fieldTip({ message: 'Port must be between 1 and 65,535' });
+                            bValid = false;
+                        }
                     }
                     if (obj.netConnect) {
                         if (obj.netHost.trim() === '') {
@@ -744,7 +867,10 @@
             }, obj);
             var acc = el.find('div.picAccordian:first');
             var cols = acc[0].columns();
-            if (obj.netConnect === true) {
+            if (obj.type === 'ocpws') {
+                cols[0].elGlyph().attr('class', 'fas fa-wifi')
+            }
+            else if (obj.netConnect === true) {
                 cols[0].elGlyph().attr('class', 'fas fa-ethernet')
             }
             else if (obj.mock === true) {
@@ -754,7 +880,12 @@
                 cols[0].elGlyph().attr('class', 'fas fa-route');
             console.log(obj);
             cols[0].elText().text(port.portId !== 0 ? 'Aux Port' : 'Primary Port');
-            cols[1].elText().text(obj.type === 'screenlogic' ? `ScreenLogic ${obj.screenlogic.systemName}` : port.netConnect ? `${port.netHost}:${port.netPort}` : port.mock ? `Mock Port` : port.rs485Port);
+            cols[1].elText().text(
+                obj.type === 'ocpws' ? `IntelliCenter ${(obj.ocpws && obj.ocpws.alias) ? obj.ocpws.alias + ' ' : ''}${(obj.ocpws && obj.ocpws.host) || ''}${obj.ocpws && obj.ocpws.port ? ':' + obj.ocpws.port : ''}`
+                : obj.type === 'screenlogic' ? `ScreenLogic ${obj.screenlogic.systemName}`
+                : port.netConnect ? `${port.netHost}:${port.netPort}`
+                : port.mock ? `Mock Port`
+                : port.rs485Port);
             if (port.portId === 0) {
                 el.find('div.btnDeleteRS485Port').hide();
                 let sl = el.find('div.pnl-screenlogic')
@@ -803,7 +934,7 @@
                 items: [{ val: 'local', name: 'Local', desc: 'Local ScreenLogic' }, { val: 'remote', name: 'Remote', desc: 'Remote ScreenLogic' }], inputAttrs: { style: { width: '10rem' } }, labelAttrs: { style: { marginLeft: '1rem', width: '8.3rem' } }
             });
             $('<div></div>').appendTo(line).inputField({ value: o.systemName, labelText: 'System Name', binding: binding + 'systemName', inputAttrs: { maxlength: 17, style: { width: '10rem' } }, labelAttrs: { style: { marginLeft: '1rem', width: '8.3rem' } } });
-            $('<div></div>').appendTo(line).valueSpinner({ value: o.password, canEdit: true, labelText: 'Password', fmtMask: "###0", emptyMask: "----", binding: binding + 'password', min: 1, max: 9999, step: 1, inputAttrs: { maxlength: 4, style: { width: '8.5rem' } }, labelAttrs: { style: { marginLeft: '1rem', width: '8.3rem' } } });
+            $('<div></div>').appendTo(line).inputField({ value: o.password, labelText: 'Password', binding: binding + 'password', inputAttrs: { type: 'password', maxlength: 32, style: { width: '10rem' } }, labelAttrs: { style: { marginLeft: '1rem', width: '8.3rem' } } });
 
             $('<div></div>').appendTo(slDivSettings).css({ fontSize: '.8rem' }).configScreenlogicStats();
 
@@ -894,7 +1025,7 @@
                         "enabled": false,
                         "type": "local",
                         "systemName": "Pentair: 00-00-00",
-                        "password": 0000
+                        "password": ""
                     },
                     "localUnit": {
 
@@ -995,7 +1126,7 @@
             line = $('<div></div>').appendTo(grpSend);
             $('<div></div>').appendTo(line).staticField({ labelText: 'Failure Rate', dataType: 'number', fmtMask: '#,##0.##', units: '%', binding: 'sndFailureRate', inputAttrs: { style: { width: '5.7rem', textAlign: 'right', display: 'inline-block' } }, labelAttrs: { style: { width: '5.5rem' } } }).css({ lineHeight: 1 });
             var db = $('div.picDashboard').each(function () {
-                this.receiveScreenlogicStats(true);
+                this.receivePortStats(true);
             });
         },
         dataBind: function (obj) {
@@ -1192,6 +1323,319 @@
             var model = o.model !== '' ? type.models.find(elem => elem.val === obj.equipment.modules[0].type) : type.models[0];
 
             dataBinder.bind(el, obj);
+        }
+    });
+    // ==========================================================================
+    // Virtual Equipment (wire-level slave simulators)
+    // --------------------------------------------------------------------------
+    // This tab configures downstream devices (pumps, chlorinators, etc.) that
+    // njsPC impersonates on the RS-485 bus toward whichever master is live
+    // (real OCP or Nixie). Persisted in data/virtualEquipment.json.
+    // ==========================================================================
+    $.widget('pic.configVirtualEquipment', {
+        options: {},
+        _create: function () {
+            var self = this, o = self.options, el = self.element;
+            self._buildControls();
+            el[0].onVirtualEquipmentUpdate = function (data) { self._render(data); };
+        },
+        _buildControls: function () {
+            var self = this, o = self.options, el = self.element;
+            el.addClass('picConfigCategory').addClass('cfgVirtualEquipment');
+            el.attr('data-role', 'virtualEquipment');
+
+            $('<div></div>').appendTo(el).addClass('virtualEquipment-warning')
+                .html('For testing only. Do not enable virtual equipment at addresses used by real hardware.');
+
+            var tabs = $('<div></div>').appendTo(el).tabBar();
+            var pumpTab = tabs[0].addTab({ id: 'tabVirtualPump', text: 'Pump' });
+            var chlorTab = tabs[0].addTab({ id: 'tabVirtualChlorinator', text: 'Chlorinator' });
+            var ichemTab = tabs[0].addTab({ id: 'tabVirtualIntelliChem', text: 'IntelliChem' });
+
+            $('<div class="virtualEquipment-pump-panel"></div>').appendTo(pumpTab);
+            $('<div class="virtualEquipment-chlor-panel"></div>').appendTo(chlorTab);
+            $('<div class="virtualEquipment-ichem-panel"></div>').appendTo(ichemTab);
+            tabs[0].selectTabById('tabVirtualPump');
+
+            self._loadAndRender();
+        },
+        _loadAndRender: function () {
+            var self = this;
+            $.getApiService('/config/virtualEquipment', null, function (data) {
+                self._render(data);
+            });
+        },
+        _render: function (data) {
+            var self = this, el = self.element;
+            var pumpPnl = el.find('div.virtualEquipment-pump-panel');
+            pumpPnl.empty();
+            var pumpAddr = parseInt(pumpPnl.attr('data-selected-address')) || 96;
+            var pump = (data && Array.isArray(data.pumps)) ? data.pumps.find(function(p) { return p.address === pumpAddr; }) : null;
+            self._renderPumpForm(pumpPnl, pump, pumpAddr);
+            self._renderPumpRuntime(pumpPnl, pump);
+
+            var chlorPnl = el.find('div.virtualEquipment-chlor-panel');
+            chlorPnl.empty();
+            var chlor = (data && Array.isArray(data.chlorinators) && data.chlorinators.length > 0) ? data.chlorinators[0] : null;
+            self._renderChlorForm(chlorPnl, chlor);
+            self._renderChlorRuntime(chlorPnl, chlor);
+
+            var ichemPnl = el.find('div.virtualEquipment-ichem-panel');
+            ichemPnl.empty();
+            var ichem = (data && Array.isArray(data.intellichems) && data.intellichems.length > 0) ? data.intellichems[0] : null;
+            self._renderIntelliChemForm(ichemPnl, ichem);
+            self._renderIntelliChemRuntime(ichemPnl, ichem);
+        },
+        // ===== Pump sub-tab =====
+        _renderPumpForm: function (pnl, pump, selectedAddr) {
+            var self = this;
+            $('<div></div>').appendTo(pnl).addClass('virtualEquipment-narrative')
+                .html('A virtual pump makes njsPC answer as if a physical IntelliFlo pump were present. ' +
+                      'Collision detection auto-disables if a real pump is also answering.');
+            var form = $('<div class="virtualEquipment-form"></div>').appendTo(pnl);
+
+            var row1 = $('<div></div>').appendTo(form);
+            var addrSpinner = $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'Address', binding: 'address',
+                min: 96, max: 111, step: 1, value: selectedAddr || 96,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginRight: '.25rem' } }
+            }).attr('title', 'Bus address of the virtual pump. 96 = Pump 1, 97 = Pump 2, etc.');
+            addrSpinner.on('change', function () {
+                var newAddr = parseInt(this.val());
+                pnl.attr('data-selected-address', newAddr);
+                self._loadAndRender();
+            });
+
+            $('<div></div>').appendTo(row1).pickList({
+                required: true,
+                value: pump ? pump.type : 'vs',
+                bindColumn: 0, displayColumn: 1, labelText: 'Type', binding: 'type',
+                columns: [
+                    { binding: 'val', hidden: true, text: 'Type' },
+                    { binding: 'desc', text: 'Description', style: { whiteSpace: 'nowrap' } }
+                ],
+                items: [{ val: 'vs', desc: 'IntelliFlo VS (RPM)' }],
+                inputAttrs: { style: { width: '13rem' } },
+                labelAttrs: { style: { marginLeft: '1rem', marginRight: '.25rem' } }
+            });
+
+            var row2 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row2).checkbox({
+                labelText: 'Enabled', binding: 'enabled'
+            }).each(function () { this.val(pump ? pump.enabled === true : false); })
+              .attr('title', 'Enable the virtual pump. When enabled it will answer bus packets addressed to it.');
+
+            var btnPnl = $('<div class="picBtnPanel btn-panel"></div>').appendTo(form);
+            var btnSave = $('<div></div>').appendTo(btnPnl).actionButton({ text: 'Save', icon: '<i class="fas fa-save"></i>' });
+            btnSave.on('click', function () {
+                var v = dataBinder.fromElement(form);
+                if (!dataBinder.checkRequired(form)) return;
+                $.putApiService('/config/virtualEquipment/pump', v, 'Saving virtual pump...', function () {
+                    self._loadAndRender();
+                });
+            });
+        },
+        _renderPumpRuntime: function (pnl, pump) {
+            var self = this;
+            var runtimeWrap = $('<div class="virtualEquipment-runtime"></div>').appendTo(pnl);
+            if (!pump) {
+                $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-hint')
+                    .text('No virtual pump configured. Fill in the form above and click Save to create one.');
+                return;
+            }
+            if (pump.autoDisabled) {
+                var banner = $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-conflict-banner');
+                banner.html('<strong>Auto-disabled:</strong> ' + (pump.autoDisabledReason || 'A real pump appears to be responding at this address.'));
+                if (pump.autoDisabledAt) banner.append($('<div class="virtualEquipment-timestamp"></div>').text('at ' + pump.autoDisabledAt));
+                var reBtn = $('<div></div>').appendTo(banner).actionButton({ text: 'Re-enable', icon: '<i class="fas fa-bolt"></i>' });
+                reBtn.on('click', function () {
+                    $.putApiService('/config/virtualEquipment/pump/' + pump.address + '/reenable', {}, 'Re-enabling virtual pump...', function () {
+                        self._loadAndRender();
+                    });
+                });
+            }
+            var grid = $('<div class="virtualEquipment-runtime-grid"></div>').appendTo(runtimeWrap);
+            grid.attr('data-address', pump.address);
+            var rt = pump.runtime || {};
+            self._setRuntimeGrid(grid, [
+                ['Effective', pump.isEffective ? 'yes' : 'no'],
+                ['Running', rt.running ? 'yes' : 'no'],
+                ['Remote control', rt.remote ? 'yes' : 'no'],
+                ['Target RPM', rt.targetRpm != null ? rt.targetRpm : '\u2014'],
+                ['Watts (simulated)', rt.watts != null ? rt.watts : '\u2014'],
+                ['Packets answered', rt.packetCount != null ? rt.packetCount : 0],
+                ['Last packet', rt.lastPacketAt || '\u2014']
+            ]);
+        },
+        // ===== Chlorinator sub-tab =====
+        _renderChlorForm: function (pnl, chlor) {
+            var self = this;
+            $('<div></div>').appendTo(pnl).addClass('virtualEquipment-narrative')
+                .html('A virtual chlorinator makes njsPC answer as if a physical IntelliChlor cell were present. ' +
+                      'The OCP polls address 80 every ~2s; once enabled the virtual cell responds and clears "Communication Lost".');
+            var form = $('<div class="virtualEquipment-form"></div>').appendTo(pnl);
+
+            var row1 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'Address', binding: 'address',
+                min: 80, max: 83, step: 1, value: chlor ? chlor.address : 80,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginRight: '.25rem' } }
+            }).attr('title', 'Chlorinator bus address. 80 = slot 1, 81 = slot 2, etc.');
+
+            $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'Salt (ppm)', binding: 'saltLevel',
+                min: 0, max: 6400, step: 50, value: chlor ? chlor.saltLevel : 3400,
+                inputAttrs: { style: { width: '5rem' } },
+                labelAttrs: { style: { marginLeft: '1rem', marginRight: '.25rem' } }
+            }).attr('title', 'Simulated salt level in ppm. Reported to the OCP in status responses.');
+
+            var row2 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row2).checkbox({
+                labelText: 'Enabled', binding: 'enabled'
+            }).each(function () { this.val(chlor ? chlor.enabled === true : false); })
+              .attr('title', 'Enable the virtual chlorinator. When enabled it responds to OCP polls.');
+
+            var btnPnl = $('<div class="picBtnPanel btn-panel"></div>').appendTo(form);
+            var btnSave = $('<div></div>').appendTo(btnPnl).actionButton({ text: 'Save', icon: '<i class="fas fa-save"></i>' });
+            btnSave.on('click', function () {
+                var v = dataBinder.fromElement(form);
+                if (!dataBinder.checkRequired(form)) return;
+                $.putApiService('/config/virtualEquipment/chlorinator', v, 'Saving virtual chlorinator...', function () {
+                    self._loadAndRender();
+                });
+            });
+        },
+        _renderChlorRuntime: function (pnl, chlor) {
+            var self = this;
+            var runtimeWrap = $('<div class="virtualEquipment-runtime"></div>').appendTo(pnl);
+            if (!chlor) {
+                $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-hint')
+                    .text('No virtual chlorinator configured. Fill in the form above and click Save to create one.');
+                return;
+            }
+            if (chlor.autoDisabled) {
+                var banner = $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-conflict-banner');
+                banner.html('<strong>Auto-disabled:</strong> ' + (chlor.autoDisabledReason || 'A real chlorinator appears to be responding at this address.'));
+                if (chlor.autoDisabledAt) banner.append($('<div class="virtualEquipment-timestamp"></div>').text('at ' + chlor.autoDisabledAt));
+                var reBtn = $('<div></div>').appendTo(banner).actionButton({ text: 'Re-enable', icon: '<i class="fas fa-bolt"></i>' });
+                reBtn.on('click', function () {
+                    $.putApiService('/config/virtualEquipment/chlorinator/' + chlor.address + '/reenable', {}, 'Re-enabling virtual chlorinator...', function () {
+                        self._loadAndRender();
+                    });
+                });
+            }
+            var grid = $('<div class="virtualEquipment-runtime-grid"></div>').appendTo(runtimeWrap);
+            grid.attr('data-address', chlor.address);
+            var rt = chlor.runtime || {};
+            self._setRuntimeGrid(grid, [
+                ['Effective', chlor.isEffective ? 'yes' : 'no'],
+                ['Salt (simulated)', chlor.saltLevel + ' ppm'],
+                ['Target output', rt.targetOutput != null ? rt.targetOutput + '%' : '\u2014'],
+                ['Packets answered', rt.packetCount != null ? rt.packetCount : 0],
+                ['Last packet', rt.lastPacketAt || '\u2014']
+            ]);
+        },
+        // ===== IntelliChem sub-tab =====
+        _renderIntelliChemForm: function (pnl, ichem) {
+            var self = this;
+            $('<div></div>').appendTo(pnl).addClass('virtualEquipment-narrative')
+                .html('A virtual IntelliChem makes njsPC answer as if a physical IntelliChem controller were present. ' +
+                      'The OCP polls address 144 every ~2s; once enabled the virtual device responds and clears "Communication Lost".');
+            var form = $('<div class="virtualEquipment-form"></div>').appendTo(pnl);
+
+            var row1 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'Address', binding: 'address',
+                min: 144, max: 158, step: 1, value: ichem ? ichem.address : 144,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginRight: '.25rem' } }
+            }).attr('title', 'IntelliChem bus address. 144 = IC 1, 145 = IC 2, etc.');
+
+            $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'pH Level', binding: 'phLevel',
+                min: 6.0, max: 8.5, step: 0.1, value: ichem ? ichem.phLevel : 7.5,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginLeft: '1rem', marginRight: '.25rem' } }
+            }).attr('title', 'Simulated pH reading.');
+
+            $('<div></div>').appendTo(row1).valueSpinner({
+                labelText: 'ORP', binding: 'orpLevel',
+                min: 0, max: 900, step: 10, value: ichem ? ichem.orpLevel : 700,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginLeft: '1rem', marginRight: '.25rem' } }
+            }).attr('title', 'Simulated ORP reading (mV).');
+
+            var row2 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row2).valueSpinner({
+                labelText: 'Temp', binding: 'temperature',
+                min: 32, max: 104, step: 1, value: ichem ? ichem.temperature : 78,
+                inputAttrs: { style: { width: '4rem' } },
+                labelAttrs: { style: { marginRight: '.25rem' } }
+            }).attr('title', 'Simulated water temperature.');
+
+            $('<div></div>').appendTo(row2).valueSpinner({
+                labelText: 'Salt (ppm)', binding: 'saltLevel',
+                min: 0, max: 6400, step: 50, value: ichem ? ichem.saltLevel : 3400,
+                inputAttrs: { style: { width: '5rem' } },
+                labelAttrs: { style: { marginLeft: '1rem', marginRight: '.25rem' } }
+            }).attr('title', 'Simulated salt level in ppm.');
+
+            var row3 = $('<div></div>').appendTo(form);
+            $('<div></div>').appendTo(row3).checkbox({
+                labelText: 'Enabled', binding: 'enabled'
+            }).each(function () { this.val(ichem ? ichem.enabled === true : false); })
+              .attr('title', 'Enable the virtual IntelliChem. When enabled it responds to OCP polls.');
+
+            var btnPnl = $('<div class="picBtnPanel btn-panel"></div>').appendTo(form);
+            var btnSave = $('<div></div>').appendTo(btnPnl).actionButton({ text: 'Save', icon: '<i class="fas fa-save"></i>' });
+            btnSave.on('click', function () {
+                var v = dataBinder.fromElement(form);
+                if (!dataBinder.checkRequired(form)) return;
+                $.putApiService('/config/virtualEquipment/intellichem', v, 'Saving virtual IntelliChem...', function () {
+                    self._loadAndRender();
+                });
+            });
+        },
+        _renderIntelliChemRuntime: function (pnl, ichem) {
+            var self = this;
+            var runtimeWrap = $('<div class="virtualEquipment-runtime"></div>').appendTo(pnl);
+            if (!ichem) {
+                $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-hint')
+                    .text('No virtual IntelliChem configured. Fill in the form above and click Save to create one.');
+                return;
+            }
+            if (ichem.autoDisabled) {
+                var banner = $('<div></div>').appendTo(runtimeWrap).addClass('virtualEquipment-conflict-banner');
+                banner.html('<strong>Auto-disabled:</strong> ' + (ichem.autoDisabledReason || 'A real IntelliChem appears to be responding at this address.'));
+                if (ichem.autoDisabledAt) banner.append($('<div class="virtualEquipment-timestamp"></div>').text('at ' + ichem.autoDisabledAt));
+                var reBtn = $('<div></div>').appendTo(banner).actionButton({ text: 'Re-enable', icon: '<i class="fas fa-bolt"></i>' });
+                reBtn.on('click', function () {
+                    $.putApiService('/config/virtualEquipment/intellichem/' + ichem.address + '/reenable', {}, 'Re-enabling virtual IntelliChem...', function () {
+                        self._loadAndRender();
+                    });
+                });
+            }
+            var grid = $('<div class="virtualEquipment-runtime-grid"></div>').appendTo(runtimeWrap);
+            var rt = ichem.runtime || {};
+            self._setRuntimeGrid(grid, [
+                ['Effective', ichem.isEffective ? 'yes' : 'no'],
+                ['pH (simulated)', ichem.phLevel],
+                ['ORP (simulated)', ichem.orpLevel + ' mV'],
+                ['Temperature', ichem.temperature + '°'],
+                ['Packets answered', rt.packetCount != null ? rt.packetCount : 0],
+                ['Last packet', rt.lastPacketAt || '\u2014']
+            ]);
+        },
+        // ===== Shared =====
+        _setRuntimeGrid: function (grid, rows) {
+            grid.empty();
+            for (var i = 0; i < rows.length; i++) {
+                var r = $('<div class="virtualEquipment-runtime-row"></div>').appendTo(grid);
+                $('<span class="virtualEquipment-runtime-label"></span>').text(rows[i][0] + ':').appendTo(r);
+                $('<span class="virtualEquipment-runtime-value"></span>').text(rows[i][1]).appendTo(r);
+            }
         }
     });
 })(jQuery);

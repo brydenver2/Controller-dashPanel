@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     $.widget("pic.pumps", {
         options: { },
         _create: function () {
@@ -71,6 +71,26 @@
             }
             return tbl;
         },
+        _isIntelliCenterV3: function () {
+            var controller = ($('body').attr('data-controllertype') || '').toLowerCase();
+            var firmware = parseFloat($('body').attr('data-firmware') || '0');
+            return controller === 'intellicenter' && !isNaN(firmware) && firmware >= 3;
+        },
+        _normalizeSpeedStepSize: function (rawStep, fallback) {
+            var parsedStep = parseInt(rawStep, 10);
+            if (isNaN(parsedStep) || parsedStep <= 0) parsedStep = fallback;
+            parsedStep = Math.max(10, parsedStep);
+            return Math.round(parsedStep / 10) * 10;
+        },
+        _getCircuitStepSize: function (pumpData, unitsVal) {
+            var defaultStep = unitsVal === 0 ? 50 : 1;
+            if (unitsVal === 0) {
+                if (!this._isIntelliCenterV3()) return defaultStep;
+                return this._normalizeSpeedStepSize(pumpData.speedStepSize, 10);
+            }
+            var flowStep = parseInt(pumpData.flowStepSize, 10);
+            return !isNaN(flowStep) && flowStep > 0 ? flowStep : defaultStep;
+        },
         setCircuitRates: function (elPump) {
             var self = this, o = self.options, el = self.element;
             var pump = { id: parseInt(elPump.attr('data-id'), 10), circuits: [] };
@@ -100,8 +120,23 @@
                     el.css({ display: '' });
                     if (data.pumpOnDelay === true)
                         el.find('div.picIndicator').attr('data-status', 'delay');
-                    else
-                        el.find('div.picIndicator').attr('data-status', data.command === 10 || data.relay > 0 ? 'on' : 'off');
+                    else {
+                        // Determine pump on/off status based on pump type
+                        var isOn = false;
+                        var vsTypes = ['vs', 'vsf', 'vf', 'hwvs', 'vs+svrs', 'regalmodbus', 'neptunemodbus'];
+                        if (vsTypes.indexOf(type.name) !== -1) {
+                            // For variable-speed pumps use actual telemetry; IntelliCenter WS does not set command=10 or relay>0
+                            isOn = (typeof data.rpm !== 'undefined' && data.rpm > 0) ||
+                                   (typeof data.watts !== 'undefined' && data.watts > 0) ||
+                                   (typeof data.flow !== 'undefined' && data.flow > 0) ||
+                                   (typeof data.speed !== 'undefined' && data.speed > 0);
+                        }
+                        else {
+                            // For relay-based pumps, use command or relay status
+                            isOn = data.command === 10 || data.relay > 0;
+                        }
+                        el.find('div.picIndicator').attr('data-status', isOn ? 'on' : 'off');
+                    }
                 }
                 el.attr('data-pumptype', data.type.val);
                 el.attr('data-id', data.id);
@@ -131,6 +166,7 @@
                     case 'vs':
                     case 'vs+svrs':
                     case 'regalmodbus':
+                    case 'neptunemodbus':
                         el.find('div.picProgram').hide();
                         el.find('div.picFlow').hide();
                         el.find('div.picSpeed').show();
@@ -203,6 +239,7 @@
             $('<div class="picProgram"><span class=picCommand>Program #</span><span class="picCommand" data-bind="command" data-fmttype="number" data-fmtmask="#" data-fmtempty="---"></span></div>').appendTo(el);
 
             el.on('click', function (evt) {
+                if (!$.pic.icSecurity.canWrite(1)) return;
                 let type = parseInt(el.attr('data-pumptype'), 10);
                 evt.stopImmediatePropagation();
                 evt.preventDefault();
@@ -214,9 +251,11 @@
                     divPopover.attr('data-id', el.attr('data-id'));
                     divPopover.appendTo(el.parent());
                     divPopover.on('initPopover', function (evt) {
+                        let hasVisibleCircuits = false;
                         for (let i = 0; i < data.circuits.length; i++) {
                             let circuit = data.circuits[i];
                             if (typeof circuit.circuit === 'undefined' || typeof circuit.circuit.type === 'undefined' || circuit.circuit.id <= 0) continue;
+                            hasVisibleCircuits = true;
                             
                             let div = $('<div class="picPumpCircuit"></div>');
                             div.attr('data-id', i + 1);
@@ -253,28 +292,55 @@
                             }
                             
                             spin.attr('data-units', circuit.units.val);
-                            if (data.type.maxRelays === 1) {
-                                continue; // don't display relays if there is only one
-                            }
-                            else if (data.type.maxRelays > 1) {
+                            let isConfigurable = false;
+                            // VS/VSF/VF/hwvs pump types do not define maxRelays on data.type, so treat
+                            // "undefined" the same as "<= 0" (i.e. pure speed/flow pump, not a relay-programmed pump).
+                            // Without this, any pump whose type omits maxRelays (Intelliflo VS, VSF, VF, Hayward VS, etc.)
+                            // would fall through and have its +/- spinner removed on the home-page popover.
+                            var typeMaxRelays = parseInt(data.type.maxRelays, 10);
+                            var isRelayProgrammed = !isNaN(typeMaxRelays) && typeMaxRelays > 1 && data.type.name !== 'ds';
+                            var isSpeedFlowPump = isNaN(typeMaxRelays) || typeMaxRelays <= 0;
+                            if (isRelayProgrammed) {
                                 spin.valueSpinner({ val: circuit.relay, min: 1, max: data.type.maxSpeeds || data.type.maxRelays, step: 1, binding: 'relay' });
                                 spin.find('div.picSpinner-value').css({ width: '3.5rem' });
+                                isConfigurable = true;
                             }
-                            else {
+                            else if (isSpeedFlowPump) {
+                                let unitsVal = parseInt(circuit.units.val, 10);
+                                let isSpeedUnits = unitsVal === 0;
+                                let minVal = parseInt(isSpeedUnits ? data.minSpeed : data.minFlow, 10);
+                                let maxVal = parseInt(isSpeedUnits ? data.maxSpeed : data.maxFlow, 10);
+                                let hasValidRange = !isNaN(minVal) && !isNaN(maxVal) && maxVal > minVal;
+                                let currentVal = parseInt(isSpeedUnits ? circuit.speed : circuit.flow, 10);
                                 if (circuit.units.val === 0) spin.attr('data-bind', 'speed');
                                 else spin.attr('data-bind', 'flow');
-                                spin.valueSpinner({
-                                    val: circuit.units.val === 0 ? circuit.speed : circuit.flow,
-                                    min: circuit.units.val === 0 ? data.minSpeed : data.minFlow,
-                                    max: circuit.units.val === 0 ? data.maxSpeed : data.maxFlow,
-                                    step: circuit.units.val === 0 ? 50 : data.flowStepSize,
-                                    units: circuit.units.name,
-                                    canEdit: true
-                                });
-                                spin.find('div.picSpinner-value').css({ width: '4.5rem' });
+                                if (hasValidRange && !isNaN(currentVal)) {
+                                    spin.valueSpinner({
+                                        val: circuit.units.val === 0 ? circuit.speed : circuit.flow,
+                                        min: circuit.units.val === 0 ? data.minSpeed : data.minFlow,
+                                        max: circuit.units.val === 0 ? data.maxSpeed : data.maxFlow,
+                                        step: self._getCircuitStepSize(data, circuit.units.val),
+                                        units: circuit.units.name,
+                                        canEdit: true
+                                    });
+                                    spin.find('div.picSpinner-value').css({ width: '4.5rem' });
+                                    isConfigurable = true;
+                                }
                             }
-                            spin.attr('data-id', i + 1);
-                            spin.on('change', function (e) { self.setCircuitRates(divPopover); });
+                            if (isConfigurable) {
+                                spin.attr('data-id', i + 1);
+                                spin.on('change', function (e) { self.setCircuitRates(divPopover); });
+                            }
+                            else {
+                                // Show the assigned circuits but suppress +/- controls when this pump has no
+                                // per-circuit editable speed/flow/relay value.
+                                spin.remove();
+                            }
+                        }
+                        if (!hasVisibleCircuits) {
+                            $('<div class="picPumpNoConfig text-instructions"></div>')
+                                .appendTo(evt.contents())
+                                .text('No configurable circuits');
                         }
                     });
                     divPopover.on('click', function (e) { e.stopImmediatePropagation(); e.preventDefault(); });

@@ -1,0 +1,92 @@
+<!--
+  AquaButler service mode widget (Layer 2, item 3).
+
+  Mounted into any AquaButler-facing page by adding
+  `<div id="aquabutler-service-mode-host"></div>` and including
+  `scripts/aquabutler/widgets/serviceMode.js`.
+
+  Subscribes to `pool/<id>/service/state` (via the bus's
+  `aquabutler:change` events), shows current mode + countdown when
+  in service mode. Enter / Exit / Force-exit buttons each open a
+  30-second confirmation window per the canonical safety UX. PIN
+  entry computes sha256(pin) via Web Crypto before publishing.
+-->
+<div id="aquabutler-service-mode-host" class="aquabutler-host">
+  <div class="aqb-service-mode">
+    <div class="aqb-service-state">
+      <span class="aqb-service-label">Mode:</span>
+      <span class="aqb-service-mode-value">normal</span>
+      <span class="aqb-service-countdown" hidden></span>
+    </div>
+
+    <div class="aqb-service-pin-row" hidden>
+      <label>
+        PIN:
+        <input type="password" class="aqb-service-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
+      </label>
+      <button type="button" class="aqb-service-confirm" disabled>Confirm</button>
+      <button type="button" class="aqb-service-cancel">Cancel</button>
+    </div>
+
+    <div class="aqb-service-actions">
+      <button type="button" class="aqb-service-enter" data-action="enter">Enter service mode</button>
+      <button type="button" class="aqb-service-exit" data-action="exit" hidden>Exit service mode</button>
+      <button type="button" class="aqb-service-force-exit" data-action="force_exit" hidden>Force exit</button>
+    </div>
+
+    <div class="aqb-service-message" hidden></div>
+  </div>
+</div>
+<style>
+  .aqb-service-mode {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: grid;
+    gap: 8px;
+  }
+  .aqb-service-state {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+  .aqb-service-label { color: #888; }
+  .aqb-service-mode-value {
+    font-weight: 600;
+  }
+  .aqb-service-mode-value.aqb-mode-service {
+    color: #c62828;
+  }
+  .aqb-service-mode-value.aqb-mode-timeout {
+    color: #ef6c00;
+  }
+  .aqb-service-countdown {
+    font-variant-numeric: tabular-nums;
+    color: #ef6c00;
+  }
+  .aqb-service-pin-row,
+  .aqb-service-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .aqb-service-pin {
+    width: 100px;
+    padding: 4px 8px;
+    font-size: 1em;
+    letter-spacing: 0.25em;
+    text-align: center;
+  }
+  .aqb-service-message {
+    font-size: 0.85em;
+    color: #888;
+  }
+  .aqb-service-message.aqb-msg-error { color: #c62828; }
+  .aqb-service-message.aqb-msg-ok { color: #2e7d32; }
+  button.aqb-confirm-pending {
+    background: #ef6c00;
+    color: #fff;
+    border-color: #ef6c00;
+  }
+</style>

@@ -1,0 +1,571 @@
+:root {
+  --fonts: HelveticaNeue-Light, Helvetica Neue Light, Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
+  --body_background: rgb(18, 20, 24);
+  --body_text: rgb(232, 234, 238);
+  --head_background: rgb(32, 56, 78);
+  --head_text: rgb(245, 247, 250);
+  --options_pane_background: rgb(28, 30, 36);
+  --options_pane_bordercolor: rgb(58, 60, 68);
+  --tile_background: rgb(46, 50, 58);
+  --tile_text: rgb(196, 200, 208);
+  --tile_on_background: rgb(58, 64, 76);
+  --tile_on_text: rgb(255, 255, 255);
+  --tile_status_text: rgb(150, 154, 162);
+  --value_tile_normal_color: rgb(72, 175, 240);
+  --value_tile_attention_color: rgb(255, 175, 40);
+  --value_tile_outofrange_color: rgb(255, 110, 40);
+  --options_slider_highlight: rgb(72, 175, 240);
+  --options_slider_lowlight: rgb(58, 62, 70);
+  --options_radio_highlight: rgb(72, 175, 240);
+  --options_radio_lowlight: rgb(58, 62, 70);
+  --error_background: rgb(150, 48, 48);
+  --csinputcell_background: rgb(38, 42, 50);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: rgb(18, 20, 24);
+  color: rgb(232, 234, 238);
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.picHeader {
+  background-color: rgb(32, 56, 78);
+  color: rgb(245, 247, 250);
+  padding: 8px 14px;
+  border-radius: 5px;
+  margin: 8px 8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.picHeader::before {
+  content: "";
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background-image: url("./aqualinkd-white.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.picHeader .picController.control-panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.control-panel,
+.popover {
+  vertical-align: top;
+  display: inline-block;
+  margin: 0.4rem 0.2rem;
+  padding: 0.6em;
+  border: 1px solid rgb(58, 60, 68);
+  border-radius: 20px;
+  background-color: rgb(28, 30, 36);
+  box-shadow: none;
+}
+
+.control-panel-title {
+  font-weight: 700;
+  color: rgb(32, 56, 78);
+  border-bottom: 2px solid rgb(72, 175, 240);
+  white-space: nowrap;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.picTile {
+  background-color: rgb(46, 50, 58);
+  color: rgb(196, 200, 208);
+  border-radius: 10px;
+  padding: 5px;
+  width: 100px;
+  height: 100px;
+  opacity: 0.9;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.picTile.is-on {
+  background-color: rgb(58, 64, 76);
+  color: rgb(255, 255, 255);
+  opacity: 1;
+}
+
+.picTile.is-flash {
+  animation: aqualinkd-tile-flash 2s infinite;
+}
+
+@keyframes aqualinkd-tile-flash {
+  0%, 100% {
+    background-color: rgb(58, 64, 76);
+    opacity: 1;
+  }
+  50% {
+    background-color: rgb(46, 50, 58);
+    opacity: 0.9;
+  }
+}
+.picTile .picTileIcon {
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.picTile .picTileName {
+  height: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.picTile .picTileStatus {
+  color: rgb(150, 154, 162);
+  height: 15px;
+  font-size: 12px;
+}
+
+.picTileValue {
+  background-color: rgb(72, 175, 240);
+  color: #fff;
+  border-radius: calc(35px / 2);
+  height: 35px;
+  min-width: 35px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 35px;
+  font-weight: 600;
+  padding: 0 8px;
+  display: inline-block;
+}
+.picTileValue.is-heat {
+  background-color: rgb(255, 138, 32);
+}
+.picTileValue.is-cool {
+  background-color: rgb(72, 175, 240);
+}
+.picTileValue.is-enabled {
+  background-color: rgb(110, 200, 60);
+}
+.picTileValue.is-disabled {
+  background-color: rgb(60, 64, 72);
+  color: rgb(170, 174, 182);
+}
+.picTileValue.is-attention {
+  background-color: rgb(255, 175, 40);
+}
+.picTileValue.is-outofrange {
+  background-color: rgb(255, 110, 40);
+}
+
+.options-pane,
+.options_pane {
+  background-color: rgb(28, 30, 36);
+  border: 2px solid rgb(58, 60, 68);
+  border-radius: 20px;
+  padding: 14px;
+  width: 345px;
+}
+
+.options-title {
+  font-size: 18px;
+  font-weight: 700;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.option-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.option-switch input {
+  display: none;
+}
+
+.option-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: rgb(58, 62, 70);
+  transition: 0.2s;
+  border-radius: 34px;
+}
+
+.option-switch .slider::before {
+  position: absolute;
+  content: "";
+  height: calc(30 * 1px);
+  width: calc(30 * 1px);
+  left: 2px;
+  bottom: 2px;
+  background-color: #fff;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.option-switch input:checked + .slider {
+  background-color: rgb(72, 175, 240);
+}
+
+.option-switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+.option-slider {
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: rgb(58, 62, 70);
+  outline: none;
+  border-radius: 20px;
+}
+
+.option-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(30 * 1px);
+  height: calc(30 * 1px);
+  background: rgb(72, 175, 240);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.option-slider::-moz-range-thumb {
+  width: calc(30 * 1px);
+  height: calc(30 * 1px);
+  background: rgb(72, 175, 240);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.option-radio-container {
+  padding: 0.2em 0;
+}
+
+.option-radio-value {
+  background-color: rgb(58, 62, 70);
+  border-radius: 50%;
+  display: inline-block;
+  height: calc(20px * 1px);
+  width: calc(20px * 1px);
+  margin-right: 0.4em;
+  vertical-align: -0.3em;
+}
+
+.option-radio-container input:checked + .option-radio-value {
+  background-color: rgb(72, 175, 240);
+}
+
+input[type=text],
+input[type=number],
+select,
+textarea {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-size: 14px;
+  background-color: rgb(38, 42, 50);
+  border: 1px solid rgb(58, 60, 68);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgb(32, 56, 78) 50%), linear-gradient(135deg, rgb(32, 56, 78) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 26px;
+}
+
+button,
+input[type=submit],
+input[type=button],
+input[type=reset] {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  background-color: rgb(46, 50, 58);
+  color: rgb(196, 200, 208);
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 28px;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+button:hover,
+input[type=submit]:hover,
+input[type=button]:hover {
+  background-color: rgb(58, 64, 76);
+  color: rgb(255, 255, 255);
+}
+
+button.is-primary,
+input[type=submit].is-primary {
+  background-color: rgb(32, 56, 78);
+  color: #fff;
+}
+
+button.is-primary:hover,
+input[type=submit].is-primary:hover {
+  background-color: rgb(7.8944741533%, 13.8153297683%, 19.2427807487%);
+}
+
+table {
+  background-color: rgb(28, 30, 36);
+  border-collapse: collapse;
+}
+
+th {
+  padding: 6px 8px;
+  text-align: left;
+  background-color: rgb(46, 50, 58);
+}
+
+td {
+  padding: 6px 8px;
+}
+
+a {
+  color: rgb(72, 175, 240);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.is-error {
+  background-color: rgb(150, 48, 48) !important;
+  color: #fff !important;
+}
+
+.is-warn {
+  color: rgb(255, 175, 40);
+}
+
+.is-ok {
+  color: rgb(110, 200, 60);
+}
+
+.dashOuter {
+  padding: 4px;
+}
+
+.dashContainer,
+.control-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  padding: 4px;
+}
+
+.dashContainer,
+.control-container {
+  grid-template-columns: 1fr;
+  gap: calc(10px * 0.75);
+  padding: 2px;
+}
+
+.picTile {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.picHeader {
+  flex-wrap: wrap;
+  padding: 8px 10px;
+}
+
+@media (min-width: 640px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 768px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .picTile {
+    max-width: none;
+  }
+}
+@media (min-width: 1024px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .picHeader::before {
+    width: 22px;
+    height: 22px;
+  }
+  .picHeader {
+    gap: 8px;
+    font-size: 13px;
+  }
+}
+.picThemeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 50%;
+  cursor: pointer;
+  user-select: none;
+  color: rgb(245, 247, 250);
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.picThemeToggle:hover,
+.picThemeToggle:focus {
+  background-color: rgba(255, 255, 255, 0.22);
+  outline: none;
+  transform: scale(1.05);
+}
+
+.picThemeToggle:active {
+  transform: scale(0.95);
+}
+
+.picThemeToggle i {
+  font-size: 14px;
+  pointer-events: none;
+}
+
+@media (max-width: 540px) {
+  .picThemeToggle {
+    width: 28px;
+    height: 28px;
+  }
+  .picThemeToggle i {
+    font-size: 12px;
+  }
+}
+.picConfigTabContents {
+  background-color: rgb(28, 30, 36);
+}
+
+.picTab {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 600;
+  border: 1px solid rgb(58, 60, 68);
+  background-color: rgb(46, 50, 58);
+  color: rgb(196, 200, 208);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.picTab.picTabSelected {
+  background-color: rgb(32, 56, 78);
+  color: #fff;
+  font-weight: 700;
+}
+
+.field-text,
+.fld-value {
+  border: 1px solid rgb(58, 60, 68);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background-color: rgb(38, 42, 50);
+}
+
+.picAccordian-title {
+  border: 1px solid rgb(58, 60, 68);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  background-color: rgb(46, 50, 58);
+  padding: 6px 10px;
+}
+
+.cs_deletebutton,
+.cs_commandcell,
+.cs_devicecell,
+.cs_inputcell {
+  background-color: rgb(38, 42, 50);
+  border: 1px solid rgb(58, 60, 68);
+  padding: 4px;
+}
+
+.cs_helpleft,
+.cs_helpright {
+  background-color: rgb(46, 50, 58);
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.picPumpOn {
+  color: rgb(110, 200, 60);
+}
+
+.picPumpOff {
+  color: rgb(60, 64, 72);
+}
+
+.picPumpRPM {
+  color: rgb(32, 56, 78);
+}
+
+div.pover-icon:hover {
+  color: rgb(72, 175, 240);
+}
+
+.picIntelliBriteIcon {
+  color: rgb(72, 175, 240);
+}
+
+.picBody[data-ison=false] .picBodyTemp {
+  color: rgb(150, 154, 162);
+}
+
+.picUnits {
+  color: rgb(150, 154, 162);
+  font-size: 75%;
+}
+
+body {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-size: 14px;
+  background-color: rgb(18, 20, 24);
+  color: rgb(232, 234, 238);
+}

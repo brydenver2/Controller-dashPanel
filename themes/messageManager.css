@@ -1,4 +1,4 @@
-﻿html {
+html {
   width: 100%;
   height: 100%;
   margin: 0px;
@@ -26,7 +26,7 @@ body {
   border: solid 1px green;
 }
 
-[tabindex="-1"]:focus {
+.ui-dialog [tabindex="-1"]:focus {
   outline: none !important;
 }
 
@@ -85,35 +85,49 @@ div.configContainer {
 }
 
 div.mmgrOuter {
-  width: 100%;
-  display: grid;
-  justify-content: center;
+  width: 98%;
+  max-width: 98%;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
-  grid-auto-rows: auto;
-  grid-row-gap: 0px;
+  margin: 0 auto;
+  padding: 5px;
+  gap: 0px;
 }
 
 div.messageContainer {
-  display: inline-grid;
-  grid-template-columns: 800px 477px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Send Queue is now its own view page (not a top container) */
+
+div.messagesContentContainer {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+}
+
+div.messagesContentContainer > div.picMessages {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 @media screen and (max-width: 1277px) {
   div.messageContainer {
-    display: inline-grid;
-    grid-template-columns: 571px 477px;
+    flex-direction: column;
   }
 }
 @media screen and (max-width: 1048px) {
   div.messageContainer {
-    display: inline-grid;
-    grid-template-columns: 547px 477px;
+    flex-direction: column;
   }
 }
 @media screen and (max-width: 1024px) {
   div.messageContainer {
-    display: inline-grid;
-    grid-template-columns: 700px;
+    flex-direction: column;
   }
 }
 .header {
@@ -152,37 +166,177 @@ td.msgList-body {
   width: 100%;
   vertical-align: top;
   overflow: hidden;
+  position: relative;
 }
 
-tr.msgRow > td:nth-child(1),
-tr.msgRow > td:nth-child(3),
-tr.msgRow > td:nth-child(4) {
+/* Empty state placeholder */
+div.msgList-empty-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
+  color: #999;
+  display: block;
+  z-index: 10;
+  pointer-events: none;
 }
 
-tr.msgRow > td:nth-child(n+5) > span {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: normal;
-  display: inline-block;
+div.msgList-empty-placeholder div.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: #ccc;
 }
 
-tr.msgRow > td:nth-child(5) > span,
-tr.msgRow > td:nth-child(6) > span,
-tr.msgRow > td:nth-child(7) > span {
-  max-width: 55px;
+div.msgList-empty-placeholder div.empty-message {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+/* Message Row Column Widths and Alignment */
+tr.msgRow > td:nth-child(1) {
+  width: 30px;
+  min-width: 20px;
+  max-width: 20px;
+  text-align: center;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(2) {
+  min-width: 20px;
+  text-align: center;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(3) {
+  min-width: 40px;
+  text-align: center;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(4) {
+  min-width: 20px;
+  text-align: center;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(5) {
+  min-width: 20px;
+  text-align: center;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(6) {
+  min-width: 60px;
+  padding: 2px;
+}
+
+tr.msgRow > td:nth-child(7) {
+  min-width: 60px;
+  padding: 2px;
 }
 
 tr.msgRow > td:nth-child(8) {
-  text-align: center;
+  min-width: 60px;
+  padding: 2px;
 }
 
-tr.msgRow > td:nth-child(8) > span {
-  max-width: 37px;
+tr.msgRow > td:nth-child(9) {
+  min-width: 30px;
+  padding: 2px;
 }
 
-tr.msgRow > td:last-child > span {
-  max-width: 427px;
+tr.msgRow > td:nth-child(10) {
+  /* Payload column - flexible, takes remaining space */
+  min-width: 200px;
+  padding: 2px;
+  text-align: left;
+}
+
+tr.msgRow > td:nth-child(n+6) > span {
+  overflow: visible;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+tr.msgRow > td:nth-child(10) > span {
+  /* Payload content */
+  overflow: visible;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: left;
+}
+
+tr.msgRow > td:nth-child(n+6) > span {
+  overflow: visible;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+tr.msgRow > td:nth-child(10) > span {
+  /* Payload content */
+  overflow: visible;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: left;
+}
+
+/* Message List Header Alignment - match column widths */
+tr.vlist-header > td.vlist-header-col:nth-child(1) {
+  width: 4px;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(2) {
+  width: 10px;
+  padding-left: 4px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(3) {
+  width: 38px;
+  padding-left: 16px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(4) {
+  width: 20px;
+  padding-left: 4px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(5) {
+  width: 20px;
+  padding-left: 2px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(6) {
+  width: 55px;
+  padding-left: 9px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(7) {
+  width: 64px;
+  padding-left: 8px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(8) {
+  width: 58px;
+  padding-left: 10px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(9) {
+  width: 20px;
+  padding-left: 0px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(10) {
+  width: 40px;
+  padding-left: 4px;
+}
+
+tr.vlist-header > td.vlist-header-col:nth-child(11) {
+  padding-left: 8px;
 }
 
 tr.msgRow.changed > td:nth-child(4) > span.changed {
@@ -209,13 +363,13 @@ tr.msgApiRow > td:nth-child(5) > span {
   padding-right: 2px;
 }
 
-tr.msgRow > td:nth-child(8) {
+/* tr.msgRow > td:nth-child(8) {
   text-align: center;
 }
 
 tr.msgRow > td:nth-child(8) > span {
   max-width: 37px;
-}
+} */
 
 tr.msgApiRow > td:last-child > span {
   display: inline-block;
@@ -227,11 +381,11 @@ tr.msgApiRow > td:last-child > span {
   overflow: hidden;
 }
 
-@media screen and (max-width: 1277px) {
+/* @media screen and (max-width: 1277px) {
   tr.msgRow > td:last-child > span {
     width: 247px;
   }
-}
+} */
 @media screen and (max-width: 1048px) {
   tr.msgRow > td:last-child > span {
     width: 224px;
@@ -314,6 +468,25 @@ span.msg-detail-byte {
 i.msg-detail-fromto {
   padding-left: 3px;
   padding-right: 3px;
+}
+
+/* Message list description column styling */
+td.msg-desc {
+  font-size: 0.85em;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+td.msg-desc span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+tr.msgRow:hover td.msg-desc {
+  color: #333;
 }
 
 div.msg-detail-section {
@@ -678,6 +851,14 @@ div.picSpaDrain[data-status=off] {
   display: none;
 }
 
+div.picIndicator[data-status=freeze] {
+  background: radial-gradient(ellipse farthest-corner at center, rgb(130, 255, 160) 0%, rgb(52, 199, 89) 100%);
+}
+
+div.picIndicator[data-status=freezeoverride] {
+  background: radial-gradient(ellipse farthest-corner at center, rgb(100, 180, 255) 0%, rgb(0, 122, 255) 100%);
+}
+
 div.picModel > i {
   cursor: pointer;
   padding-right: 0.2rem;
@@ -893,4 +1074,700 @@ div.sysmessage-button > div.dropdown-panel {
 
 #orderOfElements {
   display: none;
+}
+
+/* Filter dialog: unchecked = excluded (checked = include; don't strike indeterminate/partial selection) */
+div.picCheckbox.cb-filter input[type=checkbox]:not(:checked):not(:indeterminate) ~ label,
+div.picCheckbox.cb-action input[type=checkbox]:not(:checked):not(:indeterminate) ~ label,
+div.picCheckbox.cb-protocol input[type=checkbox]:not(:checked):not(:indeterminate) ~ label,
+div.picCheckbox.cb-port input[type=checkbox]:not(:checked):not(:indeterminate) ~ label {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Collapsible action expander affordances (Filter Out Messages dialog) */
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible {
+  display: flex;
+  align-items: center;
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible label {
+  cursor: pointer;
+  user-select: none;
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible span.expander-hit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 0.4rem;
+  margin: 0 0.35rem 0 0.35rem;
+  border-radius: 4px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible span.expander-hit:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible span.expander-hit > i {
+  font-size: 1rem;
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible span.expander-hit > span.expander-count {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+div.pnl-protofilter div.picCheckbox.cb-action.cb-collapsible span.expander-hit.expanded > span.expander-count {
+  display: none;
+}
+
+/* Payload Descriptor Table Styles */
+div.payload-descriptors {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 2px solid #159FCF;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+table.payload-descriptor-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0px;
+  font-size: 9pt;
+  margin-top: 5px;
+  table-layout: auto;
+}
+
+table.payload-descriptor-table thead {
+  color: white;
+  font-weight: bold;
+  filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=1, StartColorStr=#FF159FCF, EndColorStr=#FF13647F);
+  background: -ms-linear-gradient(top, #159FCF, #13647F);
+  background: -moz-linear-gradient(top, #159FCF, #13647F);
+  background: -webkit-linear-gradient(top, #159FCF, #13647F);
+  background: linear-gradient(to bottom, #159FCF, #13647F);
+}
+
+table.payload-descriptor-table th {
+  border: solid 1px white;
+  padding: 4px 6px;
+  text-align: left;
+  font-size: 8pt;
+  white-space: nowrap;
+}
+
+table.payload-descriptor-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+table.payload-descriptor-table tbody tr:hover {
+  background-color: #e8f4f8;
+}
+
+table.payload-descriptor-table tbody tr.selected {
+  background-color: #fde4be;
+  font-weight: bold;
+}
+
+table.payload-descriptor-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+table.payload-descriptor-table tbody tr.selected:nth-child(even) {
+  background-color: #fde4be;
+}
+
+table.payload-descriptor-table td {
+  border: solid 1px #ddd;
+  padding: 3px 6px;
+  vertical-align: top;
+  font-size: 8pt;
+}
+
+table.payload-descriptor-table td.desc-start,
+table.payload-descriptor-table td.desc-length {
+  text-align: center;
+  width: 40px;
+}
+
+table.payload-descriptor-table td.desc-name {
+  width: 120px;
+  font-weight: 500;
+}
+
+table.payload-descriptor-table td.desc-description {
+  min-width: 150px;
+  max-width: 200px;
+}
+
+table.payload-descriptor-table td.desc-values {
+  font-family: monospace;
+  font-size: 7pt;
+  max-width: 250px;
+  word-wrap: break-word;
+}
+
+/* New data columns */
+table.payload-descriptor-table td.desc-current,
+table.payload-descriptor-table td.desc-previous {
+  font-family: 'Courier New', monospace;
+  font-size: 8pt;
+  text-align: center;
+  white-space: normal;
+  word-wrap: break-word;
+  background-color: #f0f8ff;
+  max-width: 150px;
+}
+
+table.payload-descriptor-table td.desc-decimal,
+table.payload-descriptor-table td.desc-ascii {
+  font-family: 'Courier New', monospace;
+  font-size: 8pt;
+  text-align: center;
+}
+
+table.payload-descriptor-table td.desc-binary {
+  font-family: 'Courier New', monospace;
+  font-size: 7pt;
+  text-align: center;
+  white-space: nowrap;
+}
+
+table.payload-descriptor-table td.desc-decoded {
+  font-weight: 500;
+  background-color: #fffacd;
+  min-width: 100px;
+}
+
+/* Highlight changed values */
+table.payload-descriptor-table td.value-changed {
+  background-color: #ffebcd !important;
+  font-weight: bold;
+  box-shadow: inset 0 0 3px rgba(255, 140, 0, 0.5);
+}
+
+/* Highlight rows that contain changed bytes (synced from top hex display) */
+table.payload-descriptor-table tbody tr.row-has-changes {
+  background-color: #ffebcd !important;
+  border-left: 3px solid #ff8c00;
+}
+
+table.payload-descriptor-table tbody tr.row-has-changes:hover {
+  background-color: #fde4be !important;
+}
+
+/* Highlighted payload bytes */
+td.payload-highlighted {
+  background-color: #FFD700 !important;
+  box-shadow: inset 0 0 3px rgba(255, 165, 0, 0.8);
+  font-weight: bold;
+}
+
+tr.msg-payload-header > td.payload-highlighted {
+  background: #ffa500 !important;
+  color: white;
+}
+
+/* Inline Expansion Styles */
+tr.msgRow.row-expanded {
+  background-color: #e8f4f8 !important;
+  border-left: 3px solid #159FCF;
+  font-weight: bold;
+}
+
+/* Make all cells in expanded row top-aligned */
+tr.msgRow.row-expanded > td {
+  vertical-align: top;
+}
+
+/* Row expand hint icon */
+i.row-expand-hint {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #FF6B35;
+  font-size: 18px;
+  font-weight: bold;
+  text-shadow: 0 0 3px rgba(255,255,255,0.8);
+  pointer-events: none;
+  animation: bounce 2s ease-in-out infinite;
+  z-index: 5;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% + 3px));
+  }
+}
+
+tr.msgRow.selected > td:last-child {
+  position: relative;
+}
+
+/* New: Expansion content that lives INSIDE the row's last cell */
+/* This survives virtual list re-renders because it's part of the row's stored HTML */
+tr.msgRow.row-expanded > td:last-child {
+  position: relative;
+}
+
+div.inline-expansion-content {
+  display: block;
+  position: relative;
+  left: 0;
+  right: 0;
+  margin-top: 5px;
+  padding: 10px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 10;
+  /* Full-justify the expansion panel under the entire row/table (not just the Payload cell). */
+  margin-left: calc(-1 * var(--mmgr-expansion-offset, 0px));
+  width: calc(100% + var(--mmgr-expansion-offset, 0px));
+  max-width: calc(100% + var(--mmgr-expansion-offset, 0px));
+  box-sizing: border-box;
+  /* IMPORTANT: Override inherited color from row hover state */
+  color: black !important;
+}
+
+/* Close button for expansion */
+div.expansion-buttons {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 5px;
+  z-index: 20;
+}
+
+div.expansion-close-btn,
+div.expansion-addqueue-btn,
+div.expansion-entity-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+div.expansion-close-btn:hover {
+  color: white;
+  background: #d9534f;
+  border-color: #d43f3a;
+}
+
+div.expansion-addqueue-btn:hover {
+  color: white;
+  background: #5cb85c;
+  border-color: #4cae4c;
+}
+
+div.expansion-entity-btn:hover {
+  color: white;
+  background: #337ab7;
+  border-color: #2e6da4;
+}
+
+/* Ensure expansion content is visible even when row is hovered */
+tr.msgRow:hover div.inline-expansion-content,
+tr.msgRow.row-expanded div.inline-expansion-content {
+  color: black !important;
+  background: white !important;
+}
+
+/* Ensure the row can contain the expansion properly */
+tr.msgRow.row-expanded > td:last-child > span {
+  display: block;
+}
+
+/* Legacy: old sibling row approach (kept for reference, may be removed) */
+tr.expanded-detail-row {
+  background-color: #f0f8ff;
+  border-left: 3px solid #159FCF;
+  position: relative;
+  z-index: 100;
+}
+
+tr.expanded-detail-row td.expanded-detail-cell {
+  padding: 0;
+  border: none;
+  overflow: visible;
+  position: relative;
+}
+
+div.inline-message-detail {
+  padding: 10px;
+  background: white;
+  border: 1px solid #ccc;
+  margin: 2px;
+  width: calc(100% - 4px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Compact Hex Display */
+div.compact-hex-header {
+  padding: 10px;
+  background: linear-gradient(to bottom, #159FCF, #13647F);
+  color: white;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 10px;
+  font-size: 9pt;
+}
+
+div.hex-info-row {
+  margin-bottom: 5px;
+}
+
+div.hex-info-row:last-child {
+  margin-bottom: 0;
+}
+
+div.compact-hex-header span.hex-label {
+  font-weight: bold;
+  margin-right: 5px;
+  margin-left: 15px;
+}
+
+div.compact-hex-header span.hex-label:first-child {
+  margin-left: 0;
+}
+
+div.compact-hex-header span.hex-value {
+  margin-right: 10px;
+}
+
+div.compact-hex-header span.hex-byte {
+  color: #ffd700;
+  font-weight: bold;
+}
+
+div.compact-hex-header i.hex-arrow {
+  margin: 0 5px;
+  color: #ffd700;
+}
+
+/* Compact Payload Table (matches original format) */
+table.compact-payload-table {
+  width: auto;
+  max-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: white;
+  font-family: 'Courier New', monospace;
+  font-size: 7pt;
+}
+
+table.compact-payload-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+table.compact-payload-table tr.compact-payload-header {
+  background: #e8f4f8;
+  font-weight: bold;
+}
+
+table.compact-payload-table tr.compact-payload-decimal {
+  background: white;
+}
+
+table.compact-payload-table tr.compact-payload-ascii {
+  background: #f9f9f9;
+}
+
+table.compact-payload-table tr.compact-payload-hex {
+  background: white;
+  font-weight: bold;
+}
+
+table.compact-payload-table td {
+  padding: 1px 3px;
+  text-align: center;
+  border: 1px solid #ddd;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  font-size: 7pt;
+  transition: all 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+table.compact-payload-table td.compact-byte-header {
+  background: #159FCF;
+  color: white;
+  font-size: 6pt;
+  cursor: pointer;
+  padding: 0px 2px;
+  line-height: 1.2;
+}
+
+table.compact-payload-table td.compact-byte-header:hover {
+  background: #13647F;
+  transform: scale(1.05);
+}
+
+table.compact-payload-table td.byte-changed {
+  background-color: #ffebcd !important;
+  border-color: #ff8c00;
+  font-weight: bold;
+  box-shadow: inset 0 0 3px rgba(255, 140, 0, 0.5);
+}
+
+table.compact-payload-table td.byte-selected {
+  background-color: #FFD700 !important;
+  border-color: #ffa500;
+  box-shadow: inset 0 0 4px rgba(255, 165, 0, 0.8);
+  font-weight: bold;
+}
+
+table.compact-payload-table td.compact-byte-decimal:hover,
+table.compact-payload-table td.compact-byte-ascii:hover,
+table.compact-payload-table td.compact-byte-hex:hover {
+  background-color: #fffacd !important;
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+/* Remove old grid styles */
+div.compact-hex-grid {
+  display: none;
+}
+
+div.compact-hex-row {
+  display: none;
+}
+
+span.compact-hex-byte {
+  display: none;
+}
+
+/* Inline Payload Section */
+div.inline-hex-display {
+  margin-bottom: 8px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+div.inline-payload-section {
+  margin-top: 8px;
+  width: 100%;
+  overflow-x: auto;
+}
+
+div.inline-payload-section .payload-descriptors {
+  margin-top: 0;
+  border-top: none;
+  width: 100%;
+}
+
+div.inline-payload-section table.payload-descriptor-table {
+  font-size: 8pt;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Flash highlight for scrollToMessage */
+@keyframes flash-highlight-anim {
+  0% { background-color: rgba(0, 217, 255, 0.4); }
+  50% { background-color: rgba(0, 217, 255, 0.2); }
+  100% { background-color: transparent; }
+}
+
+tr.message-row.flash-highlight {
+  animation: flash-highlight-anim 1.5s ease-out;
+}
+
+/* MessageManager header uses Settings-style tabBar() (picTabs/picTab). */
+.mmgrTabHeader {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border: solid 1px gray;
+  border-radius: 5px;
+  box-shadow: 5px 5px 5px rgba(27, 27, 27, 0.4);
+}
+
+/* Put tabs + actions on one row, like the main header/settings. */
+.picMessageManager div.mmgrTabBar > div.picTabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.picMessageManager div.mmgrTabBar > div.picTabContents {
+  display: none;
+}
+
+.picMessageManager div.mmgrTabBar {
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+/* MessageManager doesn't render tabBar contents directly under tabs, so remove the
+   negative margins that normally overlap the contents panel (they create a small gap here). */
+.picMessageManager div.mmgrTabBar div.picTab,
+.picMessageManager div.mmgrTabBar div.picTabSelected {
+  margin-bottom: 0;
+}
+
+.picMessageManager .mmgrTabSpacer {
+  flex: 1 1 auto;
+}
+
+.picMessageManager div.mmgrTabBar span.picTabText > i {
+  margin-right: 8px;
+}
+
+/* Right-side actions: align with header icon style (simple, hover orange). */
+.picMessageManager .view-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.picMessageManager .view-bar-status {
+  font-size: 0.8rem;
+  color: slategray;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picMessageManager .view-bar-icon-btn {
+  background: transparent;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.picMessageManager .view-bar-icon-btn:hover {
+  color: orange;
+  text-shadow: 3px 3px 16px #272634;
+}
+
+.picMessageManager .view-bar-icon-btn i {
+  font-size: 1rem;
+}
+
+.picMessageManager .view-bar-filter.filter-active {
+  background: #ff8c00;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.picMessageManager .view-bar-filter.filter-active:hover {
+  background: #ffa033;
+  color: #fff;
+  text-shadow: none;
+}
+.picMessageManager .view-bar-icon-btn:focus-visible,
+.picMessageManager .upload-btn.view-bar-upload:focus-visible,
+.picMessageManager .mmgrButton:focus-visible,
+.picMessageManager .expansion-close-btn:focus-visible,
+.picMessageManager .expansion-entity-btn:focus-visible,
+.picMessageManager .expansion-addqueue-btn:focus-visible {
+  outline: 2px solid #1f6feb;
+  outline-offset: 2px;
+}
+
+/* Choose Files button: match unselected tab styling and invert on hover. */
+.picMessageManager .upload-btn.view-bar-upload {
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+  text-shadow: none;
+  transition: color 0.2s;
+}
+
+.picMessageManager .upload-btn.view-bar-upload:hover {
+  color: orange;
+  text-shadow: none;
+}
+.picMessageManager .mmgr-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+/* View containers */
+.view-container {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0; /* Critical for flex scrolling */
+}
+
+.view-container.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-container[data-view="entityFlow"] .picEntityFlow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Adjust message container for flex layout */
+.messageContainer {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+}
+
+.messagesContentContainer {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }

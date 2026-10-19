@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     $.widget("pic.dashboard", {
         options: { socket: null },
         _create: function () {
@@ -19,6 +19,8 @@
             el.find('div.picChemistry').each(function () { this.initChemistry(); });
             el.find('div.picSchedules').each(function () { this.initSchedules(); });
             el.find('div.picFilters').each(function () { this.initFilters(); });
+            el.find('div.picValves').each(function () { this.initValves(); });
+            el.find('div.picCovers').each(function () { this.initCovers(); });
         },
         _createControllerPanel: function (data) {
             var self = this, o = self.options, el = self.element;
@@ -40,6 +42,14 @@
         _createFiltersPanel: function (data) {
             var self = this, o = self.options, el = self.element;
             el.find('div.picFilters').each(function () { this.initFilters(data); });
+        },
+        _createValvesPanel: function (data) {
+            var self = this, o = self.options, el = self.element;
+            el.find('div.picValves').each(function () { this.initValves(data); });
+        },
+        _createCoversPanel: function (data) {
+            var self = this, o = self.options, el = self.element;
+            el.find('div.picCovers').each(function () { this.initCovers(data); });
         },
 
         _reset: function () {
@@ -75,6 +85,12 @@
                     $('div.picDashboard').attr('data-hideintellibrite', 'true');
                     $('div.picDashboard').attr('data-masterid', '1');
                     break;
+                case 'aqualink':
+                    $('div.picDashboard').attr('data-controllertype', 'AquaLink');
+                    $('div.picDashboard').attr('data-hidethemes', 'false');
+                    $('div.picDashboard').attr('data-hideintellibrite', 'true');
+                    $('div.picDashboard').attr('data-masterid', '0');
+                    break;
                 case 'intellitouch':
                     $('div.picDashboard').attr('data-controllertype', 'IntelliTouch');
                     $('div.picDashboard').attr('data-hidethemes', 'true');
@@ -107,12 +123,23 @@
             console.log('resetting state');
             $.getLocalService('/config/serviceUri', null, function (data, status, xhr) {
                 console.log(data);
-                o.apiServiceUrl = data.protocol + data.ip + (typeof data.port !== 'undefined' && !isNaN(data.port) ? ':' + data.port : '');
+                var ip = data.ip || '';
+                if (ip.indexOf(':') !== -1 && ip.indexOf('.') !== -1) ip = ip.split(':')[0];
+                o.apiServiceUrl = data.protocol + ip + (typeof data.port !== 'undefined' && !isNaN(data.port) ? ':' + data.port : '');
                 o.useProxy = makeBool(data.useProxy);
                 $('body').attr('data-apiserviceurl', o.apiServiceUrl);
                 $('body').attr('data-apiproxy', o.useProxy);
                 $.getApiService('/state/all', null, function (data, status, xhr) {
                     self._setControllerType(data.controllerType);
+                    if (typeof data.equipment !== 'undefined') {
+                        var fwRaw = data.equipment.softwareVersion || '';
+                        var fwMatch = fwRaw.match(/(\d+\.\d+)/);
+                        $('body').attr('data-firmware', fwMatch ? fwMatch[1] : fwRaw);
+                    }
+                    if (typeof data.temps !== 'undefined' && typeof data.temps.units !== 'undefined') {
+                        var resetUnits = typeof data.temps.units === 'object' ? data.temps.units.val : data.temps.units;
+                        $('body').attr('data-units', resetUnits);
+                    }
                     //if (data.equipment.model.startsWith('IntelliCenter')) {
                     //    $('div.picDashboard').attr('data-controllertype', 'IntelliCenter');
                     //    $('div.picDashboard').attr('data-hidethemes', 'false');
@@ -135,6 +162,8 @@
                     self._createChemistryPanel(data);
                     self._createSchedulesPanel(data);
                     self._createFiltersPanel(data);
+                    self._createValvesPanel(data);
+                    self._createCoversPanel(data);
                     if (typeof data.equipment !== 'undefined' && typeof data.equipment.messages !== 'undefined') {
                         $('div.picSysMessages').each(function () {
                             console.log('binding messages');
@@ -154,13 +183,25 @@
             console.log('initializing state');
             $.getLocalService('/config/serviceUri', null, function (data, status, xhr) {
                 console.log(data);
-                o.apiServiceUrl = data.protocol + data.ip + (typeof data.port !== 'undefined' && !isNaN(data.port) ? ':' + data.port : '');
+                var ip2 = data.ip || '';
+                if (ip2.indexOf(':') !== -1 && ip2.indexOf('.') !== -1) ip2 = ip2.split(':')[0];
+                o.apiServiceUrl = data.protocol + ip2 + (typeof data.port !== 'undefined' && !isNaN(data.port) ? ':' + data.port : '');
                 o.useProxy = makeBool(data.useProxy);
                 $('body').attr('data-apiserviceurl', o.apiServiceUrl);
                 $('body').attr('data-apiproxy', o.useProxy);
                 $.getApiService('/state/all', null, function (data, status, xhr) {
                     if (typeof data.equipment === 'undefined' || typeof data.equipment.model === 'undefined') { self._clearPanels(); return; }
-                    if (data.equipment.model.startsWith('IntelliCenter')) {
+                    var fwRaw2 = (data.equipment && data.equipment.softwareVersion) || '';
+                    var fwMatch2 = fwRaw2.match(/(\d+\.\d+)/);
+                    $('body').attr('data-firmware', fwMatch2 ? fwMatch2[1] : fwRaw2);
+                    if (typeof data.temps !== 'undefined' && typeof data.temps.units !== 'undefined') {
+                        var initUnits = typeof data.temps.units === 'object' ? data.temps.units.val : data.temps.units;
+                        $('body').attr('data-units', initUnits);
+                    }
+                    if (typeof data.controllerType !== 'undefined') {
+                        self._setControllerType(data.controllerType);
+                    }
+                    else if (data.equipment.model.startsWith('IntelliCenter')) {
                         $('div.picDashboard').attr('data-controllertype', 'IntelliCenter');
                         $('div.picDashboard').attr('data-hidethemes', 'false');
                     }
@@ -182,6 +223,8 @@
                     self._createChemistryPanel(data);
                     self._createSchedulesPanel(data);
                     self._createFiltersPanel(data);
+                    self._createValvesPanel(data);
+                    self._createCoversPanel(data);
                     self._initSockets();
                     console.log(data);
                     console.log('initializing element order');
@@ -222,20 +265,30 @@
                     $(':root').css('--picFilters-order', getStorage('--picFilters-order'));
                     if (typeof getStorage('--picFilters-display') === 'undefined') setStorage('--picFilters-display', $(':root').css('--picFilters-display'));
                     $(':root').css('--picFilters-display', getStorage('--picFilters-display'));
+                    if (typeof getStorage('--picValves-order') === 'undefined') setStorage('--picValves-order', $(':root').css('--picValves-order'));
+                    $(':root').css('--picValves-order', getStorage('--picValves-order'));
+                    if (typeof getStorage('--picValves-display') === 'undefined') setStorage('--picValves-display', $(':root').css('--picValves-display'));
+                    $(':root').css('--picValves-display', getStorage('--picValves-display'));
+                    if (typeof getStorage('--picCovers-order') === 'undefined') setStorage('--picCovers-order', $(':root').css('--picCovers-order'));
+                    $(':root').css('--picCovers-order', getStorage('--picCovers-order'));
+                    if (typeof getStorage('--picCovers-display') === 'undefined') setStorage('--picCovers-display', $(':root').css('--picCovers-display'));
+                    $(':root').css('--picCovers-display', getStorage('--picCovers-display'));
 
                     if (typeof getStorage('--show-time-remaining') === 'undefined') setStorage('--show-time-remaining', $(':root').css('--show-time-remaining'));
                     $(':root').css('--show-time-remaining', getStorage('--show-time-remaining'));
 
                     // put elements in correct container div
-                    let arr = ['picBodies', 'picCircuits', 'picLights', 'picSchedules', 'picChemistry', 'picPumps', 'picVirtualCircuits', 'picFilters'];
+                    let arr = ['picBodies', 'picCircuits', 'picLights', 'picSchedules', 'picChemistry', 'picPumps', 'picVirtualCircuits', 'picFilters', 'picValves', 'picCovers'];
                     arr.forEach(id => {
                         console.log(id);
                         let el = $(`.${id}`);
                         let elVarName = `--${id}-order`;
-                        if (getStorage(elVarName) >= 200) {
+                        let order = getStorage(elVarName);
+                        el.css('order', order);
+                        if (order >= 200) {
                             $(el).appendTo('.container3');
                         }
-                        else if (getStorage(elVarName) >= 100) {
+                        else if (order >= 100) {
                             $(el).appendTo('.container2');
                         }
                         else {
@@ -267,6 +320,11 @@
                     this.dataBind(data);
                 });
             });
+            o.socket.on('alertConfig', function (data) {
+                $('div.cfgAlerts').each(function () {
+                    if (this.dataBind) this.dataBind(data);
+                });
+            });
 
             o.socket.on('circuit', function (data) {
                 console.log({ evt: 'circuit', data: data });
@@ -285,6 +343,14 @@
                 console.log({ evt: 'virtualCircuit', data: data });
                 $('div.picVirtualCircuit[data-circuitid=' + data.id + ']').each(function () {
                     this.setState(data);
+                });
+            });
+            o.socket.on('virtualEquipment', function (data) {
+                // Emitted by njsPC VirtualEquipmentManager on every state change
+                // or collision event. Any open Virtual Equipment tab re-renders
+                // from this snapshot without a REST round-trip.
+                $('div.cfgVirtualEquipment').each(function () {
+                    if (typeof this.onVirtualEquipmentUpdate === 'function') this.onVirtualEquipmentUpdate(data);
                 });
             });
             o.socket.on('equipmentMessage', function (data) {
@@ -331,6 +397,16 @@
             });
             o.socket.on('temps', function (data) {
                 console.log({ evt: 'temps', data: data });
+                var socketUnits = typeof data.units === 'object' && data.units !== null ? data.units.val : data.units;
+                if (typeof socketUnits !== 'undefined') {
+                    var currentUnits = $('body').attr('data-units');
+                    $('body').attr('data-units', socketUnits);
+                    if (String(currentUnits) !== String(socketUnits)) {
+                        $('div.cfgBody').each(function () {
+                            if (typeof this.setSystemUnits === 'function') this.setSystemUnits(data.units);
+                        });
+                    }
+                }
                 $('div.picBodies').each(function () {
                     this.setTemps(data);
                 });
@@ -353,6 +429,9 @@
             });
             o.socket.on('config', function (data) {
                 console.log({ evt: 'config', data: data });
+                $('div.picController').each(function () {
+                    if (this.refreshIcSecurity) this.refreshIcSecurity();
+                });
             });
             o.socket.on('schedule', function (data) {
                 console.log({ evt: 'schedule', data: data });
@@ -379,7 +458,15 @@
             });
             o.socket.on('valve', function (data) {
                 console.log({ evt: 'valve', data: data });
-
+                $('div.picValves').each(function () {
+                    this.setValveData(data);
+                });
+            });
+            o.socket.on('cover', function (data) {
+                console.log({ evt: 'cover', data: data });
+                $('div.picCovers').each(function () {
+                    this.setCoverData(data);
+                });
             });
             o.socket.on('panelMode', function (data) {
                 console.log({ evt: 'panelMode', data: data });
@@ -393,7 +480,11 @@
                 $('div.picController').each(function () {
                     this.setControllerState(data);
                 });
-
+                if (typeof data.vacation !== 'undefined') {
+                    $('div.picScheduleContainer').each(function () {
+                        this.setVacationMode(data.vacation);
+                    });
+                }
             });
             o.socket.on('pump', function (data) {
                 console.log({ evt: 'pump', data: data });
@@ -429,6 +520,18 @@
                 });
                 if (screenlogic.length === 0){
                     self.receiveScreenlogicStats(false);
+                }
+            });
+            o.socket.on('icwsStats', function (data) {
+                // IntelliCenter v3 local WebSocket stats (mutually exclusive with rs485Stats / screenlogicStats).
+                var icws = el.find(`div.pnl-ocpwsStats`);
+                icws.each(function () { this.dataBind({ ocpws: data }); });
+                // Surface basic status on the comms config page panel as well.
+                var st = el.find('span.pnl-ocpws-status');
+                if (st.length) {
+                    var counter = (data && data.counter) || {};
+                    st.text((data && data.status) + ' / in:' + (counter.framesIn || 0) + ' out:' + (counter.framesOut || 0)
+                        + (data && data.lastError ? ' (err: ' + data.lastError + ')' : ''));
                 }
             });
             o.socket.on('chemController', function (data) {

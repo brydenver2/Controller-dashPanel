@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     $.widget('pic.configPage', {
         options: {
             cfg: {},
@@ -25,6 +25,10 @@
                 case 'tabFilters':
                     evt.newTab.contents.empty();
                     $('<div></div>').appendTo(evt.newTab.contents).configFilters();
+                    break;
+                case 'tabCovers':
+                    evt.newTab.contents.empty();
+                    $('<div></div>').appendTo(evt.newTab.contents).configCovers();
                     break;
                 case 'tabCircuits':
                     self._buildCircuitsTab(evt.newTab.contents);
@@ -82,15 +86,23 @@
                     $('<div></div>').appendTo(evt.newTab.contents).configLightGroups();
                     break;
                 case 'tabRemotes':
-                    self._buildRemotesTab(evt.newTab.contents);
+                    evt.newTab.contents.empty();
+                    $('<div></div>').appendTo(evt.newTab.contents).configRemotes();
                     break;
                 case 'tabHeaters':
                     evt.newTab.contents.empty();
                     $('<div></div>').appendTo(evt.newTab.contents).configHeaters();
                     break;
                 case 'tabSchedules':
+                    self._buildScheduleTab(evt.newTab.contents);
+                    break;
+                case 'tabRegularSchedules':
                     evt.newTab.contents.empty();
-                    $('<div></div>').appendTo(evt.newTab.contents).configSchedules();
+                    $('<div></div>').appendTo(evt.newTab.contents).configSchedules({ schedGroup: 0 });
+                    break;
+                case 'tabVacationSchedules':
+                    evt.newTab.contents.empty();
+                    $('<div></div>').appendTo(evt.newTab.contents).configVacationSchedules();
                     break;
                 case 'tabInterfaces':
                     evt.newTab.contents.empty();
@@ -100,16 +112,24 @@
                     evt.newTab.contents.empty();
                     $('<div></div>').appendTo(evt.newTab.contents).configMockControllerType();
                     break;
+                case 'tabVirtualEquipment':
+                    evt.newTab.contents.empty();
+                    $('<div></div>').appendTo(evt.newTab.contents).configVirtualEquipment();
+                    break;
             }
             if (typeof evt.oldTab !== 'undefined') {
                 // Need to clear the tab so that we stop getting the RS485 output messages
                 if (evt.oldTab.id === 'tabRS485' && evt.newTab.id !== 'tabRS485') evt.oldTab.contents.empty();
+                // Clear virtual equipment socket binding when leaving that tab
+                if (evt.oldTab.id === 'tabVirtualEquipment' && evt.newTab.id !== 'tabVirtualEquipment') evt.oldTab.contents.empty();
             }
         },
         _buildControls: function () {
             var self = this, o = self.options, el = self.element;
             var tabs = $('<div class="picTabPanel"></div>');
             tabs.appendTo(el);
+            tabs.attr('id', 'configMainTabBar');
+            tabs.attr('data-nav-group', 'config-main-tabs');
             tabs.tabBar();
             tabs.find('div.picTabContents').addClass('picConfigTabContents');
             tabs.on('tabchange', function (evt) { self._onTabChanged(evt); });
@@ -123,14 +143,16 @@
                     { id: 'tabInterfaces', text: 'Interfaces', cssClass: 'cfgInterfaces' },
                     { id: 'tabRS485', text: 'Comms', cssClass: 'cfgRS485Port' },
                     // { id: 'tabScreenlogic', text: 'ScreenLogic', cssClass: 'cfgScreenlogic' },
-                    { id: 'tabMockControllerType', text: 'Anslq25 (Mock Controller)', cssClass: 'cfgMockControllerType' }],
+                    { id: 'tabMockControllerType', text: 'Anslq25 (Mock Controller)', cssClass: 'cfgMockControllerType' },
+                    { id: 'tabVirtualEquipment', text: 'Virtual Equipment', cssClass: 'cfgVirtualEquipment' }],
                 );
                 //tabs[0].showTab('tabController', false);
                 tab = self._addConfigTab({ id: 'tabGeneral', text: 'General', cssClass: 'cfgGeneral' });
                 tab = self._addConfigTab({ id: 'tabBodySetup', text: 'Bodies', cssClass: 'cfgTabBodies' },
                     [
                         { id: 'tabBodies', text: 'Bodies', cssClass: 'cfgBodies' },
-                        { id: 'tabFilters', text: 'Filters', cssClass: 'cfgFiters' }
+                        { id: 'tabFilters', text: 'Filters', cssClass: 'cfgFiters' },
+                        { id: 'tabCovers', text: 'Covers', cssClass: 'cfgCovers' }
                     ]);
                 tab = self._addConfigTab({ id: 'tabCircuits', text: 'Circuits', cssClass: 'cfgCircuits' },
                     [{ id: 'tabAuxCircuits', text: 'Aux-Circuits', cssClass: 'cfgAuxCircuits' },
@@ -150,10 +172,13 @@
                 tab = self._addConfigTab({ id: 'tabValves', text: 'Valves', cssClass: 'cfgValves' });
                 tab = self._addConfigTab({ id: 'tabChemistry', text: 'Chemistry', cssClass: 'cfgChemistry' });
                 tab = self._addConfigTab({ id: 'tabHeaters', text: 'Heaters', cssClass: 'cfgHeaters' });
-                //tab = self._addConfigTab({ id: 'tabRemotes', text: 'Remotes', cssClass: 'cfgRemotes' });
+                tab = self._addConfigTab({ id: 'tabRemotes', text: 'Remotes', cssClass: 'cfgRemotes' });
 
-                tab = self._addConfigTab({ id: 'tabSchedules', text: 'Schedules', cssClass: 'cfgSchedules' });
+                tab = self._addConfigTab({ id: 'tabSchedules', text: 'Schedules', cssClass: 'cfgSchedules' },
+                    [{ id: 'tabRegularSchedules', text: 'Regular', cssClass: 'cfgRegularSchedules' },
+                     { id: 'tabVacationSchedules', text: 'Vacation', cssClass: 'cfgVacationSchedules' }]);
                 tabs[0].selectTabById('tabGeneral');
+                self._applyIcPermissions(tabs);
                 el.trigger(evt);
             });
         },
@@ -168,6 +193,8 @@
                 if (typeof subTabs !== 'undefined') {
                     var tabs = $('<div class="picTabPanel"></div>');
                     tabs.appendTo(contents);
+                    tabs.attr('id', `${attrs.id || 'config'}SubTabBar`);
+                    tabs.attr('data-nav-group', `${attrs.id || 'config'}-sub-tabs`);
                     tabs.tabBar();
                     tabs.find('div.picTabContents').addClass('picConfigTabContents');
                     //tabs.on('tabchange', function (evt) { self._onTabChanged(evt); });
@@ -182,6 +209,40 @@
             });
             return divOuter;
         },
+        _applyIcPermissions: function (tabs) {
+            if ($('body').attr('data-controllertype') !== 'intellicenter') return;
+            var ctrl = $('div.picController');
+            var session = null;
+            if (ctrl.length && ctrl[0].icSession) session = ctrl[0].icSession;
+            if (!session) {
+                try { session = ctrl.data('picController').options.icSession; } catch (e) { }
+            }
+            if (!session || (!session.roleId && !session.isGuest)) return;
+            if (session.isAdmin) return;
+            var mask = session.permissionsMask || 0;
+            var hasBit = function (bit) { return ((mask >> (31 - bit)) & 1) === 1; };
+            var tabSectionMap = {
+                'tabGeneral': [5, 4],
+                'tabBodySetup': [10, 11, 18, 19, 20, 21],
+                'tabCircuits': [13, 12, 2],
+                'tabPumps': [1],
+                'tabValves': [1],
+                'tabRemotes': [1],
+                'tabChemistry': [0],
+                'tabHeaters': [1, 18, 20],
+                'tabSchedules': [14]
+            };
+            for (var tabId in tabSectionMap) {
+                var bits = tabSectionMap[tabId];
+                var allowed = false;
+                for (var i = 0; i < bits.length; i++) {
+                    if (hasBit(bits[i])) { allowed = true; break; }
+                }
+                if (!allowed) {
+                    tabs.find('[data-tabid="' + tabId + '"]').hide();
+                }
+            }
+        },
         _buildCircuitsTab: function (contents) {
             var self = this, o = self.options, el = self.element;
             // Find the currently selected tab.  We want to reload it.
@@ -194,7 +255,7 @@
                 case 'tabLightGroups':
                 case 'tabAuxCircuits':
                 case 'tabCustomNames':
-                    //tabs.selectedTabId(tabId);
+                    tabs[0].selectTabById(tabId);
                     break;
                 default:
                     tabs[0].selectTabById('tabAuxCircuits');
@@ -210,7 +271,8 @@
             switch (tabId) {
                 case 'tabBodies':
                 case 'tabFilters':
-                    //tabs.selectedTabId(tabId);
+                case 'tabCovers':
+                    tabs.selectTabById(tabId);
                     break;
                 default:
                     tabs.selectTabById('tabBodies');
@@ -218,19 +280,31 @@
             }
         },
 
-        _buildControllerTab: function (contents) {
+        _buildScheduleTab: function (contents) {
             var self = this, o = self.options, el = self.element;
-            // Find the currently selected tab.  We want to reload it.
             var tabs = contents.find('div.picTabBar:first')[0];
             var tabId = tabs.selectedTabId();
-            //tabs.showTab('tabControllerType', false);
-            //tabs.showTab('tabRS485', false);
+            switch (tabId) {
+                case 'tabRegularSchedules':
+                case 'tabVacationSchedules':
+                    tabs.selectTabById(tabId);
+                    break;
+                default:
+                    tabs.selectTabById('tabRegularSchedules');
+                    break;
+            }
+        },
+
+        _buildControllerTab: function (contents) {
+            var self = this, o = self.options, el = self.element;
+            var tabs = contents.find('div.picTabBar:first')[0];
+            var tabId = tabs.selectedTabId();
             switch (tabId) {
                 case 'tabControllerType':
-                    case 'tabInterfaces':
-                    case 'tabRS485':
-                    case 'tabScreenlogic':
-                    //tabs.selectedTabId(tabId);
+                case 'tabInterfaces':
+                case 'tabRS485':
+                case 'tabScreenlogic':
+                    tabs.selectTabById(tabId);
                     break;
                 default:
                     tabs.selectTabById('tabInterfaces');
@@ -250,7 +324,7 @@
                 case 'tabChemistry':
                 case 'tabHeaters':
                 case 'tabRemotes':
-                    //tabs.selectedTabId(tabId);
+                    tabs.selectTabById(tabId);
                     break;
                 default:
                     tabs.selectTabById('tabValves');

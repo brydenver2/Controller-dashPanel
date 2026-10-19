@@ -1,4 +1,4 @@
-﻿import * as express from "express";
+﻿import express from "express";
 import { ApiError } from '../Errors';
 import { UploadRoute, BackgroundUpload } from "../upload/upload";
 import { Client } from "node-ssdp";
@@ -6,7 +6,7 @@ import { config } from "../config/Config";
 import { logger } from "../logger/Logger";
 import { MessageDocs } from "../messages/messages";
 import { outQueues } from "../queues/outboundQueue";
-import * as extend from 'extend';
+import extend from 'extend';
 
 export class MessagesRoute {
     public static initRoutes(app: express.Application) {
@@ -54,6 +54,14 @@ export class MessagesRoute {
         app.get('/messages/docs/keyBytes', (req, res, next) => {
             try {
                 return res.status(200).send(MessageDocs.getKeyBytes());
+            }
+            catch (err) {
+                next(err);
+            }
+        });
+        app.get('/messages/docs/entityFlow', (req, res, next) => {
+            try {
+                return res.status(200).send(MessageDocs.getEntityFlow());
             }
             catch (err) {
                 next(err);

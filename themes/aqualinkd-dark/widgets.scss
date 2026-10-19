@@ -1,0 +1,580 @@
+// widgets.scss — AqualinkD look applied to the dashPanel widget classes.
+// Mirrors controller.html's CSS-variable scheme while keeping the dashPanel's
+// legacy class names (picCircuit, picBody, picPump, picChemistry, ...) intact.
+
+@import '../mixins/gradients.scss';
+@import './colors.scss';
+
+// CSS custom properties — the page may also override them at runtime via setProp.
+:root {
+  --fonts: #{$font_family};
+  --body_background: #{$body_background};
+  --body_text: #{$body_text};
+  --head_background: #{$header_background};
+  --head_text: #{$header_text};
+  --options_pane_background: #{$panel_background};
+  --options_pane_bordercolor: #{$panel_border_color};
+  --tile_background: #{$tile_background};
+  --tile_text: #{$tile_text};
+  --tile_on_background: #{$tile_on_background};
+  --tile_on_text: #{$tile_on_text};
+  --tile_status_text: #{$tile_status_text};
+  --value_tile_normal_color: #{$value_normal};
+  --value_tile_attention_color: #{$value_attention};
+  --value_tile_outofrange_color: #{$value_outofrange};
+  --options_slider_highlight: #{$slider_highlight};
+  --options_slider_lowlight: #{$slider_lowlight};
+  --options_radio_highlight: #{$radio_highlight};
+  --options_radio_lowlight: #{$radio_lowlight};
+  --error_background: #{$error_background};
+  --csinputcell_background: #{$input_background};
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: $body_background;
+  color: $body_text;
+  font-family: $font_family;
+  font-weight: $font_weight;
+  font-size: $font_size_base;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+// ----- Header bar -----
+.picHeader {
+  background-color: $header_background;
+  color: $header_text;
+  padding: 8px 14px;
+  border-radius: 5px;
+  margin: 8px 8px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.picHeader::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background-image: url('./aqualinkd-white.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.picHeader .picController.control-panel {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+// ----- Generic panel (was gradient + shadow in legacy themes) -----
+.control-panel,
+.popover {
+  vertical-align: top;
+  display: inline-block;
+  margin: .4rem .2rem;
+  padding: .6em;
+  border: 1px solid $panel_border_color;
+  border-radius: $panel_border_radius;
+  background-color: $panel_background;
+  box-shadow: none;
+}
+
+.control-panel-title {
+  font-weight: 700;
+  color: $header_background;
+  border-bottom: 2px solid $value_normal;
+  white-space: nowrap;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+// ----- Tile (the AqualinkD signature look) -----
+.picTile {
+  background-color: $tile_background;
+  color: $tile_text;
+  border-radius: 10px;
+  padding: 5px;
+  width: $tile_width;
+  height: $tile_width;
+  opacity: 0.9;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.picTile.is-on {
+  background-color: $tile_on_background;
+  color: $tile_on_text;
+  opacity: 1.0;
+}
+
+.picTile.is-flash {
+  animation: aqualinkd-tile-flash 2s infinite;
+}
+
+@keyframes aqualinkd-tile-flash {
+  0%, 100% { background-color: $tile_on_background; opacity: 1.0; }
+  50% { background-color: $tile_background; opacity: 0.9; }
+}
+
+.picTile .picTileIcon {
+  height: $tile_icon_height;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+}
+
+.picTile .picTileName {
+  height: $tile_name_height;
+  line-height: $tile_name_lineheight;
+  font-weight: $font_weight;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.picTile .picTileStatus {
+  color: $tile_status_text;
+  height: $tile_status_height;
+  font-size: 12px;
+}
+
+// ----- Value badge (chemistry temps / pH / ORP / salt) -----
+.picTileValue {
+  background-color: $value_normal;
+  color: #fff;
+  border-radius: calc(#{$tile_icon-height} / 2);
+  height: $tile_icon_height;
+  min-width: $tile_icon_height;
+  text-align: center;
+  vertical-align: middle;
+  line-height: $tile_icon_height;
+  font-weight: $font_weight;
+  padding: 0 8px;
+  display: inline-block;
+
+  &.is-heat { background-color: $heat_color; }
+  &.is-cool { background-color: $cool_color; }
+  &.is-enabled { background-color: $enabled_color; }
+  &.is-disabled {
+    background-color: $disabled_bg;
+    color: $disabled_fg;
+  }
+  &.is-attention { background-color: $value_attention; }
+  &.is-outofrange { background-color: $value_outofrange; }
+}
+
+// ----- Option pane (modals/dialogs/options) -----
+.options-pane,
+.options_pane {
+  background-color: $panel_background;
+  border: 2px solid $panel_border_color;
+  border-radius: $panel_border_radius;
+  padding: 14px;
+  width: 345px;
+}
+
+.options-title {
+  font-size: 18px;
+  font-weight: 700;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+// iOS-style toggle switch
+.option-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+.option-switch input { display: none; }
+.option-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: $slider_lowlight;
+  transition: .2s;
+  border-radius: 34px;
+}
+.option-switch .slider::before {
+  position: absolute;
+  content: '';
+  height: calc(#{$slider_ball} * 1px);
+  width: calc(#{$slider_ball} * 1px);
+  left: 2px; bottom: 2px;
+  background-color: #fff;
+  transition: .2s;
+  border-radius: 50%;
+}
+.option-switch input:checked + .slider {
+  background-color: $slider_highlight;
+}
+.option-switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
+
+// Slider
+.option-slider {
+  appearance: none;
+  width: 100%;
+  height: $slider_height;
+  background: $slider_lowlight;
+  outline: none;
+  border-radius: $slider_height;
+}
+.option-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: calc(#{$slider_ball} * 1px);
+  height: calc(#{$slider_ball} * 1px);
+  background: $slider_highlight;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.option-slider::-moz-range-thumb {
+  width: calc(#{$slider_ball} * 1px);
+  height: calc(#{$slider_ball} * 1px);
+  background: $slider_highlight;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+// Radio bullets
+.option-radio-container {
+  padding: 0.2em 0;
+}
+.option-radio-value {
+  background-color: $radio_lowlight;
+  border-radius: 50%;
+  display: inline-block;
+  height: calc(#{$radio_ball} * 1px);
+  width: calc(#{$radio_ball} * 1px);
+  margin-right: 0.4em;
+  vertical-align: -0.3em;
+}
+.option-radio-container input:checked + .option-radio-value {
+  background-color: $radio_highlight;
+}
+
+// ----- Form inputs -----
+input[type=text],
+input[type=number],
+select,
+textarea {
+  font-family: $font_family;
+  font-size: 14px;
+  background-color: $input_background;
+  border: 1px solid $panel_border_color;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, $header_background 50%),
+                    linear-gradient(135deg, $header_background 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 26px;
+}
+
+// ----- Buttons -----
+button,
+input[type=submit],
+input[type=button],
+input[type=reset] {
+  font-family: $font_family;
+  font-weight: $font_weight;
+  font-size: 14px;
+  background-color: $tile_background;
+  color: $tile_text;
+  border: 0;
+  padding: 6px 14px;
+  border-radius: 28px;
+  cursor: pointer;
+  min-width: 70px;
+}
+button:hover,
+input[type=submit]:hover,
+input[type=button]:hover {
+  background-color: $tile_on_background;
+  color: $tile_on_text;
+}
+button.is-primary,
+input[type=submit].is-primary {
+  background-color: $header_background;
+  color: #fff;
+}
+button.is-primary:hover,
+input[type=submit].is-primary:hover {
+  background-color: darken($header_background, 8%);
+}
+
+// ----- Tables (used by schedules, messageManager, cron config) -----
+table {
+  background-color: $panel_background;
+  border-collapse: collapse;
+}
+
+th {
+  padding: 6px 8px;
+  text-align: left;
+  background-color: $tile_background;
+}
+
+td {
+  padding: 6px 8px;
+}
+
+// ----- Links -----
+a {
+  color: $slider_highlight;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+// ----- Status / error states -----
+.is-error {
+  background-color: $error_background !important;
+  color: #fff !important;
+}
+.is-warn {
+  color: $value_attention;
+}
+.is-ok {
+  color: $enabled_color;
+}
+
+// ----- Containers / Dashboard layout -----
+.dashOuter {
+  padding: 4px;
+}
+
+.dashContainer,
+.control-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: $tile_grid_gap;
+  padding: 4px;
+}
+
+// ----- Responsive layout (mobile-first, breaks up at sm/md/lg/xl) -----
+// The AqualinkD tile grid auto-fits by default; the rules below constrain
+// column counts at each breakpoint so phones get a single column, tablets
+// get 2, and wide desktops get up to 5. The header collapses on narrow
+// screens so the controller title + status fit without horizontal scroll.
+// Mirrors the light theme's responsive rules; see aqualinkd/widgets.scss.
+
+@mixin breakpoint-sm { @media (min-width: 640px) { @content; } }
+@mixin breakpoint-md { @media (min-width: 768px) { @content; } }
+@mixin breakpoint-lg { @media (min-width: 1024px) { @content; } }
+@mixin breakpoint-xl { @media (min-width: 1280px) { @content; } }
+
+// Phones (< 640px): single-column stack, tighter tile spacing
+.dashContainer,
+.control-container {
+  grid-template-columns: 1fr;
+  gap: calc(#{$tile_grid_gap} * 0.75);
+  padding: 2px;
+}
+
+.picTile {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.picHeader {
+  flex-wrap: wrap;
+  padding: 8px 10px;
+}
+
+// Tablets (≥ 640px): two-column tile grid
+@include breakpoint-sm {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Small laptops / large tablets (≥ 768px): three columns
+@include breakpoint-md {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .picTile {
+    max-width: none;
+  }
+}
+
+// Desktops (≥ 1024px): four columns
+@include breakpoint-lg {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+// Wide desktops (≥ 1280px): five columns
+@include breakpoint-xl {
+  .dashContainer,
+  .control-container {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+// Header on narrow screens — drop the icon to free up title space
+@media (max-width: 540px) {
+  .picHeader::before {
+    width: 22px;
+    height: 22px;
+  }
+  .picHeader {
+    gap: 8px;
+    font-size: 13px;
+  }
+}
+
+// ----- Theme mode toggle (light/dark) -----
+// Same as the light theme — uses rgba() so it reads correctly on the dark
+// header without depending on $header_text contrast tricks.
+.picThemeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 50%;
+  cursor: pointer;
+  user-select: none;
+  color: $header_text;
+  background-color: rgba(255, 255, 255, 0.10);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.picThemeToggle:hover,
+.picThemeToggle:focus {
+  background-color: rgba(255, 255, 255, 0.22);
+  outline: none;
+  transform: scale(1.05);
+}
+.picThemeToggle:active {
+  transform: scale(0.95);
+}
+.picThemeToggle i {
+  font-size: 14px;
+  pointer-events: none;
+}
+
+@media (max-width: 540px) {
+  .picThemeToggle {
+    width: 28px;
+    height: 28px;
+  }
+  .picThemeToggle i {
+    font-size: 12px;
+  }
+}
+
+// ----- Config-page specific -----
+.picConfigTabContents {
+  background-color: $panel_background;
+}
+
+.picTab {
+  font-family: $font_family;
+  font-weight: $font_weight;
+  border: 1px solid $panel_border_color;
+  background-color: $tile_background;
+  color: $tile_text;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.picTab.picTabSelected {
+  background-color: $header_background;
+  color: #fff;
+  font-weight: 700;
+}
+
+.field-text,
+.fld-value {
+  border: 1px solid $panel_border_color;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background-color: $input_background;
+}
+
+// ----- Schedules / messageManager -----
+.picAccordian-title {
+  border: 1px solid $panel_border_color;
+  border-top-left-radius: $border_radius;
+  border-top-right-radius: $border_radius;
+  background-color: $tile_background;
+  padding: 6px 10px;
+}
+
+.cs_deletebutton,
+.cs_commandcell,
+.cs_devicecell,
+.cs_inputcell {
+  background-color: $input_background;
+  border: 1px solid $panel_border_color;
+  padding: 4px;
+}
+
+.cs_helpleft,
+.cs_helpright {
+  background-color: $tile_background;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+// ----- Pump / Chemistry accents -----
+.picPumpOn {
+  color: $enabled_color;
+}
+.picPumpOff {
+  color: $disabled_bg;
+}
+.picPumpRPM {
+  color: $header_background;
+}
+
+// ----- Misc widget hooks (keep legacy dashPanel classes functioning) -----
+div.pover-icon:hover {
+  color: $value_normal;
+}
+
+.picIntelliBriteIcon {
+  color: $value_normal;
+}
+
+.picBody[data-ison=false] .picBodyTemp {
+  color: $tile_status_text;
+}
+
+.picUnits {
+  color: $tile_status_text;
+  font-size: 75%;
+}

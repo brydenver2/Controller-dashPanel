@@ -1,0 +1,15 @@
+// theme.scss — AqualinkD DARK theme
+// Inverts the AqualinkD design language to a dark palette. Widget geometry
+// and component layout are shared with the light theme (same widgets.scss
+// import); only the colors.scss variables differ.
+
+@import '../mixins/gradients.scss';
+@import './colors.scss';
+@import './widgets.scss';
+
+body {
+  font-family: $font_family;
+  font-size: $font_size_base;
+  background-color: $body_background;
+  color: $body_text;
+}

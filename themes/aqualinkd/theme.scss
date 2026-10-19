@@ -1,0 +1,10 @@
+@import '../mixins/gradients.scss';
+@import './colors.scss';
+@import './widgets.scss';
+
+body {
+  font-family: $font_family;
+  font-size: $font_size_base;
+  background-color: $body_background;
+  color: $body_text;
+}

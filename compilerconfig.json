@@ -32,6 +32,10 @@
     "inputFile": "themes/materia/theme.scss"
   },
   {
+    "outputFile": "themes/android-material/theme.css",
+    "inputFile": "themes/android-material/theme.scss"
+  },
+  {
     "outputFile": "themes/purple/theme.css",
     "inputFile": "themes/purple/theme.scss"
   },
@@ -42,6 +46,10 @@
   {
     "outputFile": "themes/bootstrap/theme.css",
     "inputFile": "themes/bootstrap/theme.scss"
+  },
+  {
+    "outputFile": "themes/ios-cupertino/theme.css",
+    "inputFile": "themes/ios-cupertino/theme.scss"
   },
   {
     "outputFile": "themes/bootstrap/intellibrite.css",
@@ -98,6 +106,30 @@
   {
     "outputFile": "themes/sketchy/colors.css",
     "inputFile": "themes/sketchy/colors.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd/theme.css",
+    "inputFile": "themes/aqualinkd/theme.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd/colors.css",
+    "inputFile": "themes/aqualinkd/colors.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd/widgets.css",
+    "inputFile": "themes/aqualinkd/widgets.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd-dark/theme.css",
+    "inputFile": "themes/aqualinkd-dark/theme.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd-dark/colors.css",
+    "inputFile": "themes/aqualinkd-dark/colors.scss"
+  },
+  {
+    "outputFile": "themes/aqualinkd-dark/widgets.css",
+    "inputFile": "themes/aqualinkd-dark/widgets.scss"
   },
   {
     "outputFile": "themes/default.css",

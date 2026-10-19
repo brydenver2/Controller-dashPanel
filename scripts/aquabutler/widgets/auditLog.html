@@ -1,0 +1,105 @@
+<!--
+  AquaButler rotary-display audit log widget (Layer 2, item 2).
+
+  Mounted into any AquaButler-facing page by adding
+  `<div id="aquabutler-audit-log-host"></div>` and including
+  `scripts/aquabutler/widgets/auditLog.js`.
+
+  Reads from the dashPanel's per-customer audit buffer via the
+  /aquabutler/audit REST endpoint, and listens to the live
+  `aquabutler:audit` socket events for append-only updates.
+
+  Paginated to last 100 entries; CSV export button downloads the
+  full buffer for the active customer.
+
+  Source of truth: ~/AquaButler-Server/docs/wiki/mqtt-topic-schema.md
+  §audit/<stream> (cross-stream merged; the dashPanel consumes all
+  streams but renders them with a `stream` label).
+-->
+<div id="aquabutler-audit-log-host" class="aquabutler-host">
+  <div class="aqb-audit-log">
+    <div class="aqb-audit-log-header">
+      <span class="aqb-audit-log-count">0 entries</span>
+      <div class="aqb-audit-log-controls">
+        <label>
+          Stream:
+          <select class="aqb-audit-stream">
+            <option value="">All</option>
+            <option value="manual">manual</option>
+            <option value="service">service</option>
+            <option value="dashpanel_action">dashpanel_action</option>
+          </select>
+        </label>
+        <button type="button" class="aqb-audit-csv">Export CSV</button>
+      </div>
+    </div>
+    <table class="aqb-audit-log-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Action</th>
+          <th>Params</th>
+          <th>Source</th>
+          <th>User</th>
+          <th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="aqb-audit-log-pager">
+      <button type="button" class="aqb-audit-prev" disabled>Newer</button>
+      <span class="aqb-audit-page-info">Page 1</span>
+      <button type="button" class="aqb-audit-next" disabled>Older</button>
+    </div>
+  </div>
+</div>
+<style>
+  .aqb-audit-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .aqb-audit-log-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .aqb-audit-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  .aqb-audit-log-table th,
+  .aqb-audit-log-table td {
+    padding: 4px 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  .aqb-audit-log-table th {
+    color: #888;
+    font-weight: 500;
+  }
+  .aqb-audit-log-table tr.aqb-row-rejected td {
+    background: rgba(198, 40, 40, 0.08);
+  }
+  .aqb-audit-log-table tr.aqb-row-new td {
+    background: rgba(46, 125, 50, 0.12);
+  }
+  .aqb-audit-log-pager {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .aqb-audit-param-cell {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    color: #555;
+    word-break: break-all;
+  }
+</style>

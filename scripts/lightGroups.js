@@ -27,16 +27,20 @@
 
         var theme = $('<div class="picIBColor" data-color="none"></div>');
         theme.appendTo(el);
-        if (typeof o.showInFeatures !== 'undefined') el.attr('data-showinfeatures', o.showInFeatures);
+        if (typeof o.showInFeatures !== 'undefined') el.attr('data-showinfeatures', String(o.showInFeatures));
         self.setState(o);
         el
             .on('mousedown', function (evt) {
+                if ($(evt.target).hasClass('picDropdownButton')) return;
                 $(this).data('lastPressed', new Date().getTime());
             })
             .on('mouseup', function (evt) {
+                if ($(evt.target).hasClass('picDropdownButton')) return;
+                if (el.find('i.picDropdownButton').hasClass('fa-spin')) return;
                 evt.stopPropagation();
                 var lastPressed = $(this).data('lastPressed');
                 if (lastPressed) {
+                    if (!$.pic.icSecurity.canWrite(12)) return;
                     var duration = new Date().getTime() - lastPressed;
                     $(this).data('lastPressed', false);
                     let ind = el.find('div.picFeatureToggle').find('div.picIndicator')
@@ -67,6 +71,7 @@
         //     setTimeout(function () { self.resetState(); }, 2000);
         // });
         el.on('click', 'i.picDropdownButton', function (evt) {
+            if (!$.pic.icSecurity.canWrite(12)) return;
             var divPopover = $('<div class="picIBThemes"></div>');
             var btn = evt.currentTarget;
             divPopover.appendTo(el.parent());
@@ -92,9 +97,13 @@
             el.attr('data-state', data.isOn);
             if (data.action.val !== 0) {
                 el.find('i.picDropdownButton').addClass('fa-spin');
+                el.find('div.picFeatureToggle').css('opacity', '0.5').css('pointer-events', 'none');
+                $(`div[data-groupid=${o.id}] > span.picLightEndTime`).text(data.action.desc + '...');
             }
             else {
                 el.find('i.picDropdownButton').removeClass('fa-spin');
+                el.find('div.picFeatureToggle').css('opacity', '').css('pointer-events', '');
+                $(`div[data-groupid=${o.id}] > span.picLightEndTime`).empty();
             }
             el.attr('data-state', data.isOn);
             if (typeof data.endTime === 'undefined') {

@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --picBodies-order: 0;
     --picCircuits-order: 100;
     --picLights-order: 105;
@@ -7,6 +7,8 @@
     --picChemistry-order: 10;
     --picSchedules-order: 15;
     --picFilters-order: 17;
+    --picValves-order: 20;
+    --picCovers-order: 22;
     --picBodies-display: block;
     --picCircuits-display: block;
     --picLights-display: block;
@@ -15,6 +17,8 @@
     --picChemistry-display: block;
     --picSchedules-display: block;
     --picFilters-display: block;
+    --picValves-display: block;
+    --picCovers-display: block;
     --number-of-columns: 2;
     --dashContainer2-display: block;
     --dashContainer3-display: block;
@@ -37,6 +41,11 @@ div.picPickList.disabled > div.picPickList-drop {
     width: 100%;
     height: 100%;
     pointer-events:all;
+}
+
+/* Tooltips should never block clicks on nearby controls. */
+.ui-tooltip {
+    pointer-events: none;
 }
 
 div.container1, div.container2, div.container3 {
@@ -96,6 +105,25 @@ div.picTabSelected {
     border-bottom:solid 3px transparent;
     z-index:101;
     margin-bottom:-2px;
+}
+[role="button"]:focus-visible,
+div.picTab:focus-visible,
+div.picActionButton:focus-visible,
+div.picOptionButton:focus-visible,
+div.picPickList-drop:focus-visible,
+div.picAccordian-title:focus-visible,
+tr.vlist-data:focus-visible {
+    outline: 2px solid #1f6feb;
+    outline-offset: 2px;
+}
+[role="button"]:focus:not(:focus-visible),
+div.picTab:focus:not(:focus-visible),
+div.picActionButton:focus:not(:focus-visible),
+div.picOptionButton:focus:not(:focus-visible),
+div.picPickList-drop:focus:not(:focus-visible),
+div.picAccordian-title:focus:not(:focus-visible),
+tr.vlist-data:focus:not(:focus-visible) {
+    outline: none;
 }
 div.picPopoverBody {
     padding:.2em;
@@ -270,6 +298,14 @@ div.picVirtualCircuits{
 div.picFilters {
     order: var(--picFilters-order);
     display: var(--picFilters-display) !important;
+}
+div.picValves {
+    order: var(--picValves-order);
+    display: var(--picValves-display) !important;
+}
+div.picCovers {
+    order: var(--picCovers-order);
+    display: var(--picCovers-display) !important;
 }
 div.picLights{
     order :var(--picLights-order);
@@ -482,6 +518,68 @@ label.picUnits, span.picUnits {
 div.picPump, div.picChlorinator, div.picSchedule, div.picChemController, div.picChemDoser, div.picBodyFilter {
     font-size:.9rem;
     cursor:pointer;
+}
+div.picValve {
+    font-size: .9rem;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+}
+div.picCover {
+    font-size: .9rem;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+}
+span.picValveTypeIcon {
+    display: inline-block;
+    min-width: 1.2rem;
+    text-align: center;
+}
+label.picValveName {
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+span.picValveStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    white-space: nowrap;
+}
+span.picValveStatusText {
+    font-size: .85em;
+}
+i.picValveStatusIcon {
+    font-size: .8em;
+    opacity: .8;
+}
+span.picCoverTypeIcon {
+    display: inline-block;
+    min-width: 1.2rem;
+    text-align: center;
+}
+label.picCoverName {
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+span.picCoverStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    white-space: nowrap;
+}
+span.picCoverStatusText {
+    font-size: .85em;
 }
     div.picBodyFilter > span.picFilterPercentage {
         display: inline-block;
@@ -767,6 +865,10 @@ div.picFieldTip {
         background: -webkit-linear-gradient(top, rgba(252,234,187,1) 0%,rgba(252,205,77,1) 50%,rgba(248,181,0,1) 51%,rgba(251,223,147,1) 100%); /* Chrome10-25,Safari5.1-6 */
         background: linear-gradient(to bottom, rgba(252,234,187,1) 0%,rgba(252,205,77,1) 50%,rgba(248,181,0,1) 51%,rgba(251,223,147,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fceabb', endColorstr='#fbdf93',GradientType=0 ); /* IE6-9 */
+    }
+    div.picFieldTip.intellichem-standalone-tip.bottom::after {
+        left: calc(100% - 14px);
+        margin-left: 0;
     }
 
 div.picFieldTip-message {

@@ -156,6 +156,7 @@
             var bodyIcon = $('<div></div>').addClass('picBodyIcon');
             var line = $('<div></div').appendTo(bodyIcon);
             $('<label></label>').addClass('picBodyText').appendTo(line);
+            $('<div></div>').addClass('picFreezeStatusText').css({ display: 'none', fontSize: '0.6rem', fontWeight: 'bold', textAlign: 'center', lineHeight: '1.1' }).appendTo(bodyIcon);
             $('<div></div>').addClass('picIndicator').appendTo(bodyIcon);
             bodyIcon.appendTo(el);
 
@@ -207,6 +208,8 @@
                 evt.stopImmediatePropagation();
                 var lastPressed = $(this).data('lastPressed');
                 if (el.hasClass('disabled')) return;
+                var bodyId = parseInt(el.attr('data-id'), 10);
+                if (!$.pic.icSecurity.canWrite(bodyId === 1 ? 11 : 10)) return;
                 if (lastPressed) {
                     let ind = $(evt.target);
                     var duration = new Date().getTime() - lastPressed;
@@ -230,7 +233,9 @@
                         }
                         else {
                             ind.attr('data-status', 'pending');
-                            $.putApiService('state/circuit/setState', { id: parseInt(el.attr('data-circuitid'), 10), state: !makeBool(ind.attr('data-state')) }, function (circ, status, xhr) {
+                            var reqState = !makeBool(ind.attr('data-state'));
+                            if (self._isFreezeActive() && makeBool(ind.attr('data-state'))) reqState = true;
+                            $.putApiService('state/circuit/setState', { id: parseInt(el.attr('data-circuitid'), 10), state: reqState }, function (circ, status, xhr) {
                                 self.setCircuitState(circ);
                             }, function () {
                                 if (ind.attr('data-status') === 'pending') ind.attr('data-status', makeBool(ind.attr('data-state')) ? 'on' : 'off');
@@ -250,6 +255,12 @@
                       
                
             el.on('click', 'div.picBodySetpoints', function (evt) {
+                var bodyId = parseInt(el.attr('data-id'), 10);
+                if (bodyId === 1) {
+                    if (!$.pic.icSecurity.canWrite(20, 21)) return;
+                } else {
+                    if (!$.pic.icSecurity.canWrite(18, 19)) return;
+                }
                 var body = el;
                 var settings = {
                     name: body.attr('data-body'),
@@ -258,7 +269,7 @@
                     coolSetpoint: parseInt(body.attr('data-coolsetpoint'), 10),
                     hasCooling: makeBool(body.attr('data-hascooling'))
                 };
-                $.getApiService('/config/body/' + el.attr('data-id') + '/heatModes', null, function (data, status, xhr) {
+                $.getApiService('/v2/config/body/' + el.attr('data-id') + '/heatModes', null, function (data, status, xhr) {
                     console.log(data);
                     var units = el.parents('div.picBodies:first').attr('data-unitsname');
                     // https://github.com/tagyoureit/nodejs-poolController/issues/314
@@ -271,6 +282,16 @@
                     var divPopover = $('<div></div>');
                     divPopover.appendTo(el.parent());
                     divPopover.on('initPopover', function (evt) {
+                        var modeCanCool = function (modeVal) {
+                            for (var i = 0; i < data.length; i++) {
+                                if (data[i].val === modeVal) return makeBool(data[i].hasCoolSetpoint);
+                            }
+                            return false;
+                        };
+                        var syncCoolVis = function (modeVal) {
+                            var canCool = modeCanCool(modeVal);
+                            divPopover.find('div[data-bind="coolSetpoint"]').toggle(canCool);
+                        };
                         if (settings.hasCooling) {
                             $('<div></div>').appendTo(evt.contents()).valueSpinner({ canEdit: true, labelText: 'Heat Point', val: settings.setPoint, min: units === "F" ? 40 : 5, max: units === "F" ? 104 : 41, step: 1, binding: 'heatSetpoint', units: '<span>&deg;</span><span class="picTempUnits">' + units + '</span>', labelAttrs: { style: { width: '5rem' } }, style: { display: 'block' } })
                                 .on('change', function (e) {
@@ -285,8 +306,10 @@
                             $('<div></div>').appendTo(evt.contents()).valueSpinner({ canEdit: true, labelText: 'Set Point', val: settings.setPoint, min: units === "F" ? 40 : 5, max: units === "F" ? 104 : 41, step: 1, binding: 'heatSetpoint', units: '<span>&deg;</span><span class="picTempUnits">' + units + '</span>', labelAttrs: { style: { marginRight: '.25rem' } } })
                                 .on('change', function (e) { self.putSetpoint(e.value); });
                         $('<div></div>').appendTo(evt.contents()).selector({ val: parseInt(body.attr('data-heatmode'), 10), test: 'text', opts: data, bind: 'heatMode' });
+                        if (settings.hasCooling) syncCoolVis(settings.heatMode);
                         evt.contents().find('div.picSelector').on('selchange', function (e) {
                             self.putHeatMode(parseInt(e.newVal, 10));
+                            if (settings.hasCooling) syncCoolVis(parseInt(e.newVal, 10));
                         });
                     });
                     divPopover.popover({ title: body.attr('data-body') + ' Heat Settings', popoverStyle: 'modal', placement: { target: body } });
@@ -309,7 +332,13 @@
                     else el.show();
                 }
                 el.find('div.picIndicator').attr('data-state', makeBool(data.isOn) ? 'on' : 'off');
-                el.find('div.picIndicator').attr('data-status', data.isOn ? data.stopDelay ? 'delayoff' : 'on' : data.startDelay ? 'delayon': 'off');
+                var indStatus = data.isOn ? data.stopDelay ? 'delayoff' : 'on' : data.startDelay ? 'delayon': 'off';
+                if (data.isOn && self._isFreezeActive()) {
+                    indStatus = data.manualFreezeOverride ? 'freezeoverride' : 'freeze';
+                }
+                el.find('div.picIndicator').attr('data-status', indStatus);
+                self._applyFreezeIndicatorStyle(el, indStatus);
+                self._updateFreezeLabel(data);
                 el.attr('data-ison', data.isOn);
                 self.disabled(data.stopDelay);
                 el.attr('data-setpoint', data.setPoint);
@@ -324,12 +353,17 @@
                     el.find('div.picBodySetpoints').show();
                     if (data.heaterOptions.hasCoolSetpoint) {
                         el.find('label.picSetpointText.heatSetpoint').text('Heat Point');
-                        if (!pnlType.toLowerCase().includes('touch')){
-                            el.find('div.coolSetpoint').show();
+                        var modeCanCool = data.heatMode && makeBool(data.heatMode.hasCoolSetpoint);
+                        if (modeCanCool) {
+                            if (!pnlType.toLowerCase().includes('touch')){
+                                el.find('div.coolSetpoint').show();
+                            }
+                            else {
+                                $('div.picPool div.coolSetpoint').show();
+                            }
                         }
                         else {
-                            // Touch doesn't have cooling setpoints on the spa; only pool
-                            $('div.picPool div.coolSetpoint').show();
+                            el.find('div.coolSetpoint').hide();
                         }
                         el.attr('data-hascooling', true);
                     }
@@ -350,6 +384,9 @@
                     case 'hybheat':
                     case 'mtheat':
                     case 'hpheat':
+                    case 'utheat':
+                    case 'meheat':
+                    case 'eti250heat':
                     case 'heater':
                     case 'dual':
                         el.find('span.picSolarOn').hide();
@@ -358,6 +395,7 @@
                         el.find('span.picCooldown').hide();
                         break;
                     case 'hpcool':
+                    case 'utcool':
                     case 'cooling':
                         el.find('span.picSolarOn').hide();
                         el.find('span.picHeaterOn').hide();
@@ -381,10 +419,43 @@
         },
         setCircuitState: function (data) {
             var self = this, o = self.options, el = self.element;
-            el.find('div.picIndicator').attr('data-status', data.isOn ? data.stopDelay ? 'delayoff' : 'on' : data.startDelay ? 'delayon' : 'off');
+            var indStatus = data.isOn ? data.stopDelay ? 'delayoff' : 'on' : data.startDelay ? 'delayon' : 'off';
+            if (data.isOn && self._isFreezeActive()) {
+                indStatus = data.manualFreezeOverride ? 'freezeoverride' : 'freeze';
+            }
+            el.find('div.picIndicator').attr('data-status', indStatus);
+            self._applyFreezeIndicatorStyle(el, indStatus);
             self.disabled(data.stopDelay);
             el.find('div.picBodyIcon div.picIndicator').attr('data-state', data.isOn);
             el.find('label.picBodyText').text(data.name);
+            self._updateFreezeLabel(data);
+        },
+        _isFreezeActive: function () {
+            return $('div.picFreezeProtect').attr('data-status') === 'on';
+        },
+        _updateFreezeLabel: function (data) {
+            var el = this.element;
+            var lbl = el.find('div.picFreezeStatusText');
+            if (data.isOn && this._isFreezeActive()) {
+                if (data.manualFreezeOverride) {
+                    lbl.html('Manual<br>Override').css('color', '#007aff').show();
+                } else {
+                    lbl.html('Freeze<br>Cycle').css('color', '#34c759').show();
+                }
+            } else {
+                lbl.hide();
+            }
+        },
+        _applyFreezeIndicatorStyle: function (el, status) {
+            var ind = el.find('div.picIndicator');
+            if (status === 'freeze' || status === 'on') {
+                ind.css('background', '');
+                ind.attr('data-status', 'on');
+            } else if (status === 'freezeoverride') {
+                ind.css('background', 'radial-gradient(ellipse farthest-corner at center, rgb(100,180,255) 0%, rgb(0,122,255) 100%)');
+            } else {
+                ind.css('background', '');
+            }
         },
         setUnits: function (units) {
             var self = this, o = self.options, el = self.element;
@@ -428,7 +499,7 @@
             var lbl = $('<label class="picFeatureLabel"></div>');
             lbl.appendTo(el);
             lbl.text(o.name);
-            if (typeof o.showInFeatures !== 'undefined') el.attr('data-showinfeatures', o.showInFeatures);
+            if (typeof o.showInFeatures !== 'undefined') el.attr('data-showinfeatures', String(o.showInFeatures));
         }
     });
     $.widget('pic.bodyHeatOptions', {

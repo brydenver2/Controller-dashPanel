@@ -1,0 +1,99 @@
+<!--
+  AquaButler per-customer live state widget (Layer 2, item 1).
+
+  Mounted into any AquaButler-facing page by adding
+  `<div id="aquabutler-live-state-host"></div>` and including
+  `scripts/aquabutler/widgets/liveState.js` (which loads
+  `mqttBus.js` and `auditEnvelope.js`).
+
+  Reads from the existing socket.io bus (`aquabutler:change` events)
+  and renders the canonical sensor set per schema v1.0 §Read topics:
+    pH (1 decimal), ORP (mV), pump state (with RPM if VS pump),
+    heater setpoint, chem summary, comm time, pool mode.
+
+  Last-state-wins with a 2s fade per the rotary display's UX. The
+  "OFFLINE > 2 min" red banner is the canonical message vocabulary;
+  we detect offline by the absence of `telemetry/_last_heard` updates
+  for >120s.
+
+  Styling is bare-bones; Layer 3 (theming) owns the visual pass.
+-->
+<div id="aquabutler-live-state-host" class="aquabutler-host">
+  <div class="aqb-live-state">
+    <table class="aqb-live-state-grid">
+      <tr>
+        <th>pH</th>
+        <td data-leaf="telemetry/ph" class="aqb-cell aqb-cell-ph">—</td>
+        <th>ORP</th>
+        <td data-leaf="telemetry/orp_mV" class="aqb-cell aqb-cell-orp">— mV</td>
+      </tr>
+      <tr>
+        <th>Pump</th>
+        <td data-leaf="telemetry/pump_state" class="aqb-cell">—</td>
+        <th>RPM</th>
+        <td data-leaf="telemetry/pump_rpm" class="aqb-cell">—</td>
+      </tr>
+      <tr>
+        <th>Pool °F</th>
+        <td data-leaf="telemetry/temp_pool" class="aqb-cell">—</td>
+        <th>Air °F</th>
+        <td data-leaf="telemetry/temp_air" class="aqb-cell">—</td>
+      </tr>
+      <tr>
+        <th>Heater set</th>
+        <td data-leaf="telemetry/heater_setpoint_f" class="aqb-cell">— °F</td>
+        <th>Mode</th>
+        <td data-leaf="status/mode" class="aqb-cell">—</td>
+      </tr>
+      <tr>
+        <th>Last error</th>
+        <td data-leaf="status/last_error" class="aqb-cell">—</td>
+        <th>Errors 24h</th>
+        <td data-leaf="status/errors_24h" class="aqb-cell">—</td>
+      </tr>
+      <tr>
+        <th>WiFi dBm</th>
+        <td data-leaf="status/wifi_rssi_dbm" class="aqb-cell">—</td>
+        <th>Comm</th>
+        <td data-leaf="health/mqtt_connected" class="aqb-cell aqb-cell-comm">—</td>
+      </tr>
+    </table>
+    <div class="aqb-offline-banner" hidden>OFFLINE &gt; 2 min</div>
+  </div>
+</div>
+<style>
+  .aqb-live-state-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+  .aqb-live-state-grid th {
+    text-align: left;
+    color: #888;
+    font-weight: 500;
+    padding: 4px 8px 4px 0;
+    width: 1%;
+    white-space: nowrap;
+  }
+  .aqb-live-state-grid td {
+    padding: 4px 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .aqb-live-state-grid td.aqb-cell-updated {
+    transition: background-color 2s ease-out;
+    background-color: rgba(46, 125, 50, 0.18);
+  }
+  .aqb-live-state-grid td.aqb-cell-bad {
+    color: #c62828;
+    font-weight: 600;
+  }
+  .aqb-offline-banner {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: #c62828;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+  }
+</style>
